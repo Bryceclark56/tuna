@@ -7,3 +7,7 @@
 
 # Build Files
 build/
+/build/
+
+# Random gradle stuff we shouldn't push
+.gradle/
