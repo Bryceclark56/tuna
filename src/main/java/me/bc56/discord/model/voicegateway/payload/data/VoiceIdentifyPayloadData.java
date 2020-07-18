@@ -3,7 +3,7 @@ package me.bc56.discord.model.voicegateway.payload.data;
 import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
-public class IdentifyVoicePayloadData implements VoiceGatewayPayloadData {
+public class VoiceIdentifyPayloadData implements VoiceGatewayPayloadData {
     public transient static final int opCode = Constants.VoiceGatewayPayloadType.IDENTIFY;
 
     @SerializedName("server_id")

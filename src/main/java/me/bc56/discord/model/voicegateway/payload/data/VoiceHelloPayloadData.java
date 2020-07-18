@@ -3,7 +3,7 @@ package me.bc56.discord.model.voicegateway.payload.data;
 import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
-public class HelloVoicePayloadData implements VoiceGatewayPayloadData {
+public class VoiceHelloPayloadData implements VoiceGatewayPayloadData {
     public transient static final int opCode = Constants.VoiceGatewayPayloadType.HELLO;
 
     @SerializedName("heartbeat_interval")

@@ -1,14 +1,12 @@
 package me.bc56.discord.util;
 
-import me.bc56.discord.model.gateway.payload.data.GatewayPayloadData;
-import me.bc56.discord.model.voicegateway.payload.data.VoiceGatewayPayloadData;
-import org.reflections.Reflections;
+import me.bc56.discord.model.gateway.payload.data.*;
+import me.bc56.discord.model.voicegateway.payload.data.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 //Map of opcodes to their PayloadData classes
 public class PayloadDataMap {
@@ -24,19 +22,18 @@ public class PayloadDataMap {
 
             map = new HashMap<>();
 
-            Reflections reflections = new Reflections(GatewayPayloadData.class.getPackage());
-            Set<Class<? extends GatewayPayloadData>> classes = reflections.getSubTypesOf(GatewayPayloadData.class);
-
-            for (Class<? extends GatewayPayloadData> payloadType : classes) {
-                try {
-                    map.put(payloadType.newInstance().getOpCode(), payloadType);
-                    log.debug("Created Payload data map!");
-                }
-                catch (InstantiationException | IllegalAccessException e) {
-                    // If this happens, then just give up
-                    log.error("Unable to create payload map", e);
-                }
-            }
+            // Register payload classes
+            map.put(Constants.GatewayPayloadType.DISPATCH, DispatchPayloadData.class);
+            map.put(Constants.GatewayPayloadType.HEARTBEAT, HeartbeatPayloadData.class);
+            map.put(Constants.GatewayPayloadType.IDENTIFY, IdentifyPayloadData.class);
+            //map.put(Constants.GatewayPayloadType.PRESENCE_UPDATE, PresencePayloadData.class); Unused for now
+            map.put(Constants.GatewayPayloadType.VOICE_STATE_UPDATE, VoiceStateUpdatePayloadData.class);
+            //map.put(Constants.GatewayPayloadType.RESUME, ResumePayloadData.class); Unused for now
+            //map.put(Constants.GatewayPayloadType.RECONNECT, ReconnectPayloadData.class); Unused for now
+            //map.put(Constants.GatewayPayloadType.REQUEST_GUILD_MEMBERS, RequestGuildMemberPayloadData.class); Unused for now
+            map.put(Constants.GatewayPayloadType.INVALID_SESSION, InvalidSessionPayloadData.class);
+            map.put(Constants.GatewayPayloadType.HELLO, HelloPayloadData.class);
+            map.put(Constants.GatewayPayloadType.HEARTBEAT_ACK, HeartbeatAckPayloadData.class);
         }
 
         return map;
@@ -48,19 +45,18 @@ public class PayloadDataMap {
 
             voiceMap = new HashMap<>();
 
-            Reflections reflections = new Reflections(VoiceGatewayPayloadData.class.getPackage());
-            Set<Class<? extends VoiceGatewayPayloadData>> classes = reflections.getSubTypesOf(VoiceGatewayPayloadData.class);
-
-            for (Class<? extends VoiceGatewayPayloadData> payloadType : classes) {
-                try {
-                    voiceMap.put(payloadType.newInstance().getOpCode(), payloadType);
-                    log.debug("Created Voice Payload data map!");
-                }
-                catch (InstantiationException | IllegalAccessException e) {
-                    // If this happens, then just give up
-                    log.error("Unable to create voice payload map", e);
-                }
-            }
+            // Register voice payload classes
+            voiceMap.put(Constants.VoiceGatewayPayloadType.IDENTIFY, VoiceIdentifyPayloadData.class);
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL, );
+            voiceMap.put(Constants.VoiceGatewayPayloadType.READY, VoiceReadyPayloadData.class);
+            voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT, VoiceHeartbeatPayloadData.class);
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.SESSION_DESCRIPTION, );
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.SPEAKING, );
+            voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT_ACK, VoiceHeartbeatAckPayloadData.class);
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.RESUME, );
+            voiceMap.put(Constants.VoiceGatewayPayloadType.HELLO, VoiceHelloPayloadData.class);
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.RESUMED, );
+            //voiceMap.put(Constants.VoiceGatewayPayloadType.CLIENT_DISCONNECT, );
         }
 
         return voiceMap;

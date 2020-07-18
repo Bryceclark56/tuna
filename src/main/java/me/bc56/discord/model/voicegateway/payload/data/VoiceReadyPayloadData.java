@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
 // https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection-example-voice-ready-payload
-public class ReadyVoicePayloadData implements VoiceGatewayPayloadData {
+public class VoiceReadyPayloadData implements VoiceGatewayPayloadData {
     public transient static final int opCode = Constants.VoiceGatewayPayloadType.READY;
 
     int ssrc;

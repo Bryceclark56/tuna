@@ -23,10 +23,10 @@ public class GatewayPayloadAdapter extends TypeAdapter<GatewayPayload> {
         Type dataType = PayloadDataMap.getMap().get(payload.getOpCode());
 
         out.beginObject();
-            out.name("op").value(payload.getOpCode());
-            out.name("d").jsonValue(gson.toJson(payload.getEventData(), dataType));
-            out.name("t").jsonValue(payload.getEventName());
-            out.name("s").value(payload.getSequence());
+        out.name("op").value(payload.getOpCode());
+        out.name("d").jsonValue(gson.toJson(payload.getEventData(), dataType));
+        out.name("t").jsonValue(payload.getEventName());
+        out.name("s").value(payload.getSequence());
         out.endObject();
     }
 
@@ -39,48 +39,45 @@ public class GatewayPayloadAdapter extends TypeAdapter<GatewayPayload> {
         Gson gson = new Gson();
 
         in.beginObject();
-            while (in.hasNext()) {
-                switch (in.nextName()) {
-                    case "op":
-                        payload.setOpCode(in.nextInt());
-                        log.debug("Found op: " + payload.getOpCode());
-                        break;
-                    case "t":
-                        if (in.peek() != JsonToken.NULL) {
-                            String tString = in.nextString();
-                            log.debug("T is: {}", tString);
-                            payload.setEventName(tString);
-                        }
-                        else {
-                            log.debug("T is null");
-                            in.nextNull();
-                        }
-                        break;
-                    case "d":
-                        log.debug("Processing data...");
-                        Type dataType = PayloadDataMap.getMap().get(payload.getOpCode());
-                        if (dataType != null) {
-                            log.debug("Type of: " + dataType.getTypeName());
-                            payload.setEventData(gson.fromJson(in, dataType));
-                            log.debug("Processed data!");
-                        }
-                        else {
-                            log.debug("Unable to discern type!!!!");
-                        }
-                        break;
-                    case "s":
-                        log.debug("Sequence is " + in.peek());
-                        if (in.peek() != JsonToken.NULL) {
-                            payload.setSequence(in.nextInt());
-                        }
-                        else {
-                            in.nextNull();
-                        }
-                        break;
-                    default:
-                        in.skipValue();
-                }
+        while (in.hasNext()) {
+            switch (in.nextName()) {
+                case "op":
+                    payload.setOpCode(in.nextInt());
+                    log.debug("Found op: " + payload.getOpCode());
+                    break;
+                case "t":
+                    if (in.peek() != JsonToken.NULL) {
+                        String tString = in.nextString();
+                        log.debug("T is: {}", tString);
+                        payload.setEventName(tString);
+                    } else {
+                        log.debug("T is null");
+                        in.nextNull();
+                    }
+                    break;
+                case "d":
+                    log.debug("Processing data...");
+                    Type dataType = PayloadDataMap.getMap().get(payload.getOpCode());
+                    if (dataType != null) {
+                        log.debug("Type of: " + dataType.getTypeName());
+                        payload.setEventData(gson.fromJson(in, dataType));
+                        log.debug("Processed data!");
+                    } else {
+                        log.debug("Unable to discern type!!!!");
+                    }
+                    break;
+                case "s":
+                    log.debug("Sequence is " + in.peek());
+                    if (in.peek() != JsonToken.NULL) {
+                        payload.setSequence(in.nextInt());
+                    } else {
+                        in.nextNull();
+                    }
+                    break;
+                default:
+                    in.skipValue();
             }
+        }
         in.endObject();
 
         log.debug("Finished processing payload!");

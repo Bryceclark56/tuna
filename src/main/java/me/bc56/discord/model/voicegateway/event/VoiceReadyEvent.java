@@ -1,7 +1,7 @@
 package me.bc56.discord.model.voicegateway.event;
 
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
-import me.bc56.discord.model.voicegateway.payload.data.ReadyVoicePayloadData;
+import me.bc56.discord.model.voicegateway.payload.data.VoiceReadyPayloadData;
 
 public class VoiceReadyEvent implements VoiceGatewayEvent {
 
@@ -14,7 +14,7 @@ public class VoiceReadyEvent implements VoiceGatewayEvent {
     private final String[] modes;
 
     public VoiceReadyEvent(VoiceGatewayPayload payload) {
-        ReadyVoicePayloadData readyPayload = (ReadyVoicePayloadData) payload.getEventData();
+        VoiceReadyPayloadData readyPayload = (VoiceReadyPayloadData) payload.getEventData();
 
         ssrc = readyPayload.getSsrc();
         ip = readyPayload.getIp();

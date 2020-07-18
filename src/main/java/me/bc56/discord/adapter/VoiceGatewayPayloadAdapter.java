@@ -3,10 +3,9 @@ package me.bc56.discord.adapter;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
-import me.bc56.discord.model.voicegateway.payload.data.HeartbeatAckVoicePayloadData;
+import me.bc56.discord.model.voicegateway.payload.data.VoiceHeartbeatAckPayloadData;
 import me.bc56.discord.util.PayloadDataMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +51,8 @@ public class VoiceGatewayPayloadAdapter extends TypeAdapter<VoiceGatewayPayload>
 
                         //Special case for heartbeat ACK
                         String simpleName = dataType.getClass().getSimpleName();
-                        if (simpleName.equals(HeartbeatAckVoicePayloadData.class.getSimpleName())) {
-                            HeartbeatAckVoicePayloadData heartbeatAckVoicePayloadData = new HeartbeatAckVoicePayloadData();
+                        if (simpleName.equals(VoiceHeartbeatAckPayloadData.class.getSimpleName())) {
+                            VoiceHeartbeatAckPayloadData voiceHeartbeatAckPayloadData = new VoiceHeartbeatAckPayloadData();
                         }
 
                         payload.setEventData(gson.fromJson(in, dataType));

@@ -1,13 +1,12 @@
 package me.bc56.discord.model.voicegateway.payload.data;
 
 import com.google.gson.annotations.JsonAdapter;
-import me.bc56.discord.adapter.HeartbeatVoicePayloadDataAdapter;
+import me.bc56.discord.adapter.HeartbeatAckVoicePayloadDataAdapter;
 import me.bc56.discord.util.Constants;
 
-
-@JsonAdapter(HeartbeatVoicePayloadDataAdapter.class)
-public class HeartbeatVoicePayloadData implements VoiceGatewayPayloadData {
-    public transient static final int opCode = Constants.VoiceGatewayPayloadType.HEARTBEAT;
+@JsonAdapter(HeartbeatAckVoicePayloadDataAdapter.class)
+public class VoiceHeartbeatAckPayloadData implements VoiceGatewayPayloadData {
+    public transient static final int opCode = Constants.VoiceGatewayPayloadType.HEARTBEAT_ACK;
 
     long nonce;
 

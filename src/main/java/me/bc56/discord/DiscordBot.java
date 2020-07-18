@@ -1,6 +1,5 @@
 package me.bc56.discord;
 
-import com.google.gson.Gson;
 import me.bc56.discord.model.ChannelMessage;
 import me.bc56.discord.model.DiscordUser;
 import me.bc56.discord.model.Guild;
@@ -13,9 +12,8 @@ import me.bc56.discord.model.api.response.BotGatewayResponse;
 
 import me.bc56.discord.model.gateway.payload.data.VoiceStateUpdatePayloadData;
 import me.bc56.discord.model.voicegateway.event.VoiceHelloEvent;
-import me.bc56.discord.model.voicegateway.event.VoiceReadyEvent;
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
-import me.bc56.discord.model.voicegateway.payload.data.HeartbeatVoicePayloadData;
+import me.bc56.discord.model.voicegateway.payload.data.VoiceHeartbeatPayloadData;
 import me.bc56.discord.service.DiscordService;
 import me.bc56.discord.util.Constants;
 import okhttp3.OkHttpClient;
@@ -30,7 +28,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -256,7 +253,7 @@ public class DiscordBot {
     private void sendVoiceHeartbeat() {
         log.debug("Sending heartbeat with nonce {}", heartbeatNonce);
 
-        HeartbeatVoicePayloadData heartbeatData = new HeartbeatVoicePayloadData();
+        VoiceHeartbeatPayloadData heartbeatData = new VoiceHeartbeatPayloadData();
         heartbeatData.setNonce(heartbeatNonce++);
 
         VoiceGatewayPayload payload = new VoiceGatewayPayload();
