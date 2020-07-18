@@ -20,7 +20,7 @@ public class VoiceGatewayPayloadAdapter extends TypeAdapter<VoiceGatewayPayload>
     @Override
     public void write(JsonWriter out, VoiceGatewayPayload payload) throws IOException {
         Gson gson = new Gson();
-        Type dataType = PayloadDataMap.getMap().get(payload.getOpCode());
+        Type dataType = PayloadDataMap.getVoiceMap().get(payload.getOpCode());
 
         out.beginObject();
         out.name("op").value(payload.getOpCode());
@@ -39,11 +39,11 @@ public class VoiceGatewayPayloadAdapter extends TypeAdapter<VoiceGatewayPayload>
         in.beginObject();
         while (in.hasNext()) {
             switch (in.nextName()) {
-                case "op":
+                case "op" -> {
                     payload.setOpCode(in.nextInt());
                     log.debug("Found op: " + payload.getOpCode());
-                    break;
-                case "d":
+                }
+                case "d" -> {
                     log.debug("Processing data...");
                     Type dataType = PayloadDataMap.getVoiceMap().get(payload.getOpCode());
                     if (dataType != null) {
@@ -57,13 +57,11 @@ public class VoiceGatewayPayloadAdapter extends TypeAdapter<VoiceGatewayPayload>
 
                         payload.setEventData(gson.fromJson(in, dataType));
                         log.debug("Processed data!");
-                    }
-                    else {
+                    } else {
                         log.debug("Unable to discern type!!!!");
                     }
-                    break;
-                default:
-                    in.skipValue();
+                }
+                default -> in.skipValue();
             }
         }
         in.endObject();

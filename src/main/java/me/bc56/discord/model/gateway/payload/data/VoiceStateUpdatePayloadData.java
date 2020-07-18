@@ -13,18 +13,11 @@ public class VoiceStateUpdatePayloadData implements GatewayPayloadData {
     @SerializedName("channel_id")
     private String channelId;
 
-    @SerializedName("user_id")
-    String userId;
-
-    GuildMember member;
-
-
-
     @SerializedName("self_mute")
-    boolean selfMute;
+    Boolean selfMute;
 
     @SerializedName("self_deaf")
-    boolean selfDeaf;
+    Boolean selfDeaf;
 
     @Override
     public int getOpCode() {

@@ -2,10 +2,10 @@ package me.bc56.discord.model.voicegateway.payload;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import me.bc56.discord.adapter.GatewayPayloadAdapter;
+import me.bc56.discord.adapter.VoiceGatewayPayloadAdapter;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceGatewayPayloadData;
 
-@JsonAdapter(GatewayPayloadAdapter.class)
+@JsonAdapter(VoiceGatewayPayloadAdapter.class)
 public class VoiceGatewayPayload {
     @SerializedName("op")
     int opCode;

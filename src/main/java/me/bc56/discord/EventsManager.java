@@ -29,7 +29,7 @@ public class EventsManager {
     public EventsManager() {
         emitters = new HashMap<>();
 
-        runner = Executors.newSingleThreadExecutor();
+        runner = Executors.newWorkStealingPool();
     }
 
     public <E extends GatewayEvent> void register(Class<E> event, Consumer<E> callback) {

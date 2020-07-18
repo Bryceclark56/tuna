@@ -9,8 +9,11 @@ import me.bc56.discord.model.gateway.event.MessageCreateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 public class Main {
     static Logger log = LoggerFactory.getLogger(Main.class);
+    static final char COMMAND_DELIM = '!';
 
     public static void main(String[] args) {
         String authToken = System.getenv("DISCORD_AUTH_TOKEN");
@@ -28,7 +31,7 @@ public class Main {
             String author = message.getAuthor().getUsername();
             log.debug("Processing channel message in tuna...");
 
-            if (author.equalsIgnoreCase("GenericBot")) {
+            if (author.equalsIgnoreCase("GenericBot") || !content.startsWith(String.valueOf(COMMAND_DELIM))) {
                 return;
             }
 
@@ -41,6 +44,25 @@ public class Main {
                 log.debug("Responding to ping!");
                 String channelId = message.getChannelId();
                 bot.sendMessage(channelId, "Pong!");
+            }
+            else if (content.equalsIgnoreCase("!join")) {
+                String guild = message.getGuildId();
+
+                bot.sendMessage(message.getChannelId(), "Connecting to voice channel!");
+                bot.connectToVoiceChannel(guild, "99691464426012672");
+                log.debug("Connected to voice, sending speaking");
+                bot.sendSpeaking(6, 1);
+                try {
+                    log.debug("Sleeping for 10 seconds");
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    log.error("Problem in sleeping", e);
+                }
+                log.debug("Attempting to leave voice");
+                bot.sendSpeaking(1, 0);
+                bot.sendMessage(message.getChannelId(), "Leaving voice!");
+                bot.disconnectFromVoice(guild);
+                log.debug("Left voice");
             }
         });
 

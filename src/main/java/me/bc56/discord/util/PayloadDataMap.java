@@ -47,11 +47,11 @@ public class PayloadDataMap {
 
             // Register voice payload classes
             voiceMap.put(Constants.VoiceGatewayPayloadType.IDENTIFY, VoiceIdentifyPayloadData.class);
-            //voiceMap.put(Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL, );
+            voiceMap.put(Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL, VoiceSelectProtocolPayloadData.class);
             voiceMap.put(Constants.VoiceGatewayPayloadType.READY, VoiceReadyPayloadData.class);
             voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT, VoiceHeartbeatPayloadData.class);
-            //voiceMap.put(Constants.VoiceGatewayPayloadType.SESSION_DESCRIPTION, );
-            //voiceMap.put(Constants.VoiceGatewayPayloadType.SPEAKING, );
+            voiceMap.put(Constants.VoiceGatewayPayloadType.SESSION_DESCRIPTION, VoiceSessionDescriptionPayloadData.class);
+            voiceMap.put(Constants.VoiceGatewayPayloadType.SPEAKING, VoiceSpeakingPayloadData.class);
             voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT_ACK, VoiceHeartbeatAckPayloadData.class);
             //voiceMap.put(Constants.VoiceGatewayPayloadType.RESUME, );
             voiceMap.put(Constants.VoiceGatewayPayloadType.HELLO, VoiceHelloPayloadData.class);
