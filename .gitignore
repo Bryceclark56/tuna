@@ -4,3 +4,6 @@
 *.ipr
 *.ids
 *.iws
+
+# Build Files
+build/
