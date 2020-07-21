@@ -51,18 +51,7 @@ public class Main {
                 bot.sendMessage(message.getChannelId(), "Connecting to voice channel!");
                 bot.connectToVoiceChannel(guild, "99691464426012672");
                 log.debug("Connected to voice, sending speaking");
-                bot.sendSpeaking(6, 1);
-                try {
-                    log.debug("Sleeping for 10 seconds");
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    log.error("Problem in sleeping", e);
-                }
-                log.debug("Attempting to leave voice");
-                bot.sendSpeaking(1, 0);
-                bot.sendMessage(message.getChannelId(), "Leaving voice!");
-                bot.disconnectFromVoice(guild);
-                log.debug("Left voice");
+                bot.sendSpeaking(0, 1);
             }
         });
 

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import me.bc56.discord.model.voicegateway.event.VoiceHeartbeatAckEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceHelloEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceReadyEvent;
+import me.bc56.discord.model.voicegateway.event.VoiceSessionDescriptionEvent;
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
 import me.bc56.discord.util.Constants.VoiceGatewayPayloadType;
 import okhttp3.Response;
@@ -46,7 +47,8 @@ public class VoiceGatewayListener extends WebSocketListener {
                 eventsManager.emit(readyEvent);
                 break;
             case VoiceGatewayPayloadType.SESSION_DESCRIPTION:
-                //TODO: Handle this
+                VoiceSessionDescriptionEvent sessDescEvent = new VoiceSessionDescriptionEvent(payload);
+                eventsManager.emit(sessDescEvent);
                 break;
             case VoiceGatewayPayloadType.SPEAKING:
                 //TODO: Handle this

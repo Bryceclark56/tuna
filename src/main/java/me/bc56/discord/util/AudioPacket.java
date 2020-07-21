@@ -1,9 +1,8 @@
 package me.bc56.discord.util;
 
-import org.bouncycastle.crypto.engines.XSalsa20Engine;
-import org.bouncycastle.crypto.macs.Poly1305;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.abstractj.kalium.NaCl;
+import org.abstractj.kalium.crypto.Box;
+import org.abstractj.kalium.crypto.SecretBox;
 import org.eclipse.collections.api.list.primitive.ByteList;
 
 public class AudioPacket {
@@ -43,20 +42,17 @@ public class AudioPacket {
             nonce[i] = header[i];
         }
 
-        XSalsa20Engine xsalsa20 = new XSalsa20Engine();
-        xsalsa20.init(true, new ParametersWithIV(new KeyParameter(secretKey), nonce));
+        SecretBox box = new SecretBox(secretKey);
+        byte[] encrypted = box.encrypt(nonce, audio.toArray());
 
-        byte[] subKey = new byte[secretKey.length];
-        xsalsa20.processBytes(subKey, 0, secretKey.length, subKey, 0);
+        byte[] packet = new byte[header.length + encrypted.length];
+        for (int i = 0; i < 12; i++) {
+            packet[i] = header[i];
+        }
+        for (int i = 0; i < encrypted.length; i++) {
+            packet[i + header.length] = encrypted[i];
+        }
 
-        Poly1305 poly1305 = new Poly1305();
-        poly1305.init(new KeyParameter(subKey));
-
-        byte[] encrypted = new byte[audio.size() + poly1305.getMacSize()];
-        xsalsa20.processBytes(audio.toArray(), 0, audio.size(), encrypted, poly1305.getMacSize());
-        poly1305.update(encrypted, poly1305.getMacSize(), audio.size());
-        poly1305.doFinal(encrypted, 0);
-
-        return encrypted;
+        return packet;
     }
 }

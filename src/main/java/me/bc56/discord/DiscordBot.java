@@ -14,16 +14,21 @@ import me.bc56.discord.model.api.response.BotGatewayResponse;
 import me.bc56.discord.model.gateway.payload.data.VoiceStateUpdatePayloadData;
 import me.bc56.discord.model.voicegateway.event.VoiceHelloEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceReadyEvent;
+import me.bc56.discord.model.voicegateway.event.VoiceSessionDescriptionEvent;
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceHeartbeatPayloadData;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceIdentifyPayloadData;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceSelectProtocolPayloadData;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceSpeakingPayloadData;
 import me.bc56.discord.service.DiscordService;
+import me.bc56.discord.util.AudioPacket;
+import me.bc56.discord.util.AudioTrack;
 import me.bc56.discord.util.Constants;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
+import org.eclipse.collections.api.list.primitive.ByteList;
+import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +37,11 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -61,6 +68,7 @@ public class DiscordBot {
     private VoiceGatewayListener voiceGateway;
 
     private DatagramSocket voiceSocket;
+    private InetSocketAddress address;
 
     private EventsManager eventEmitters;
 
@@ -70,6 +78,7 @@ public class DiscordBot {
 
     private short voiceSequence;
     private int voiceSSRC;
+    private Byte[] secretKey;
 
     public DiscordBot(String authToken, String userAgent, Retrofit retrofit) {
         this.state = "STOPPED";
@@ -120,6 +129,7 @@ public class DiscordBot {
 
         //Register internal voice events
         eventEmitters.register(VoiceHelloEvent.class, event -> setupVoiceHeartbeat(event.getHeartbeatInterval()));
+        eventEmitters.register(VoiceSessionDescriptionEvent.class, event -> secretKey = event.getSecretKey());
 
         eventEmitters.register(VoiceReadyEvent.class, event -> {
             //Send Select Protocol event to Discord then open a UDP socket for voice
@@ -127,8 +137,8 @@ public class DiscordBot {
             voiceSelectProtocolPayloadData.setProtocol("udp");
 
             VoiceSelectProtocolPayloadData.Data voiceSelectProtocolPayloadDataData = new VoiceSelectProtocolPayloadData.Data();
-            voiceSelectProtocolPayloadDataData.setAddress("8.8.8.8");
-            voiceSelectProtocolPayloadDataData.setPort(6666);
+            voiceSelectProtocolPayloadDataData.setAddress("108.49.53.188");
+            voiceSelectProtocolPayloadDataData.setPort(6649);
             voiceSelectProtocolPayloadDataData.setMode("xsalsa20_poly1305");
 
             voiceSelectProtocolPayloadData.setData(voiceSelectProtocolPayloadDataData);
@@ -142,11 +152,32 @@ public class DiscordBot {
             try {
                 log.debug("Opening UDP socket...");
                 voiceSocket = new DatagramSocket();
-                InetSocketAddress socketAddress = new InetSocketAddress(event.getIp(), event.getPort());
-                voiceSocket.connect(socketAddress);
-
-
+                address = new InetSocketAddress(event.getIp(), event.getPort());
                 voiceSSRC = event.getSsrc();
+
+                AudioTrack track = new AudioTrack.Builder("Test").addOpusJSON().build();
+
+                byte[] primSecretKey = new byte[secretKey.length];
+                for (int i = 0; i < secretKey.length; i++) {
+                    primSecretKey[i] = secretKey[i];
+                }
+                Runnable task = () -> {
+                  if (track.canProvideFrame()) {
+                      int frame = track.getFramePos();
+
+                      int timestamp = 960 * frame;
+
+                      AudioPacket packet = new AudioPacket((short) frame, timestamp, voiceSSRC, track.nextFrame(), primSecretKey);
+                      try {
+                          sendVoiceAudio(packet.getEncryptedPacket());
+                      } catch (Exception e) {
+                          e.printStackTrace();
+                      }
+                  }
+                };
+
+                var scheduler = Executors.newSingleThreadScheduledExecutor();
+                scheduler.scheduleAtFixedRate(task, 0, 19, TimeUnit.MILLISECONDS);
             } catch (SocketException e) {
                 log.error("Problem with the voice UDP socket!", e);
             }
@@ -154,6 +185,14 @@ public class DiscordBot {
     }
 
     public void sendSpeaking(int delay, int speaking) {
+        while (voiceSSRC == 0) {
+            try {
+                Thread.sleep(50);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
+
         VoiceSpeakingPayloadData voiceSpeakingPayloadData = new VoiceSpeakingPayloadData();
         voiceSpeakingPayloadData.setDelay(delay);
         voiceSpeakingPayloadData.setSsrc(voiceSSRC);
@@ -166,24 +205,8 @@ public class DiscordBot {
         voiceGateway.send(voiceWebSocket, payload);
     }
 
-    public void sendVoiceAudio(byte[] audio) throws IOException {
-        int audioSize = audio.length;
-        int totalSize = audioSize + 12;
-        byte versionAndFlags = b(0x80);
-        byte payloadType = b(0x78);
-        InetAddress socketAddress = voiceSocket.getInetAddress();
-        int port = voiceSocket.getPort();
-        int unixTime = (int)(System.currentTimeMillis() / 1000);
-
-        ByteBuffer buffer = ByteBuffer.allocate(audioSize + 12)
-                .put(versionAndFlags)
-                .put(payloadType)
-                .put(ByteBuffer.allocate(2).putShort(voiceSequence++))
-                .put(ByteBuffer.allocate(4).putInt(unixTime))
-                .put(audio);
-
-        DatagramPacket packet = new DatagramPacket(buffer.array(), totalSize, socketAddress, port);
-
+    public void sendVoiceAudio(byte[] bytes) throws IOException {
+        DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address);
         voiceSocket.send(packet);
     }
 

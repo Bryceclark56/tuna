@@ -1,16 +1,23 @@
 package me.bc56.discord.util;
 
 import club.minnced.opus.util.OpusLibrary;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.ptr.PointerByReference;
 import org.eclipse.collections.api.list.primitive.ByteList;
+import org.eclipse.collections.api.list.primitive.MutableByteList;
 import org.eclipse.collections.api.list.primitive.MutableShortList;
 import org.eclipse.collections.api.list.primitive.ShortList;
 import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.ShortLists;
 import tomp2p.opuswrapper.Opus;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -49,7 +56,7 @@ public class AudioTrack {
                 byte b1 = pcm.get(i + 1);
 
                 // TODO; This might be the wrong way around - verify!
-                short s = (short) ((((short) b0) << 8) | ((short) b1));
+                short s = (short) ((((short) b1) << 8) | ((short) b0));
                 shorts.add(s);
             }
 
@@ -77,10 +84,16 @@ public class AudioTrack {
             IntBuffer errBuf = IntBuffer.allocate(8); // Yeah, we don't actually use this...
             PointerByReference opusEncoder = instance.opus_encoder_create(OPUS_SAMPLE_RATE, OPUS_CHANNEL_COUNT, Opus.OPUS_APPLICATION_AUDIO, errBuf);
 
+            try {
+                Thread.sleep(5000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             int frameCount = pcm.size() / (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT);
             ShortBuffer pcmBuffer = ShortBuffer.allocate(OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT);
             ByteBuffer frameBuffer = ByteBuffer.allocate(OPUS_FRAME_MAX_BYTES);
-            for (int i = 0; i < frameCount; i++) {
+            for (int i = 0; i < 1000; i++) { // TODO: Fix segfaults
                 for (int j = i * (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT); j < (i + 1) * (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT); j++) {
                     pcmBuffer.put(pcm.get(j));
                 }
@@ -103,6 +116,32 @@ public class AudioTrack {
             return this;
         }
 
+        public Builder addOpusJSON() {
+            // TODO; Don't hardcode this!
+            try {
+                File json = new File("test.json");
+                BufferedReader reader = new BufferedReader(new FileReader(json));
+
+                Gson gson = new Gson();
+                JsonObject whatever = gson.fromJson(reader, JsonObject.class);
+                JsonArray frames = whatever.getAsJsonArray("frames");
+
+                frames.forEach(frame -> {
+                    JsonArray data = frame.getAsJsonObject().getAsJsonArray("data");
+
+                    MutableByteList byteList = ByteLists.mutable.empty();
+                    data.forEach(b -> {
+                        byteList.add((byte) b.getAsInt());
+                    });
+                    opusFrames.add(byteList);
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return this;
+        }
+
         public AudioTrack build() {
             AudioTrack audioTrack = new AudioTrack();
             audioTrack.name = this.name;
@@ -113,13 +152,17 @@ public class AudioTrack {
         }
     }
 
-    private AudioTrack() {};
+    public AudioTrack() {};
 
-    private boolean canProvideFrame() {
+    public boolean canProvideFrame() {
         return framePos < (opusFrames.size() - 1);
     }
 
-    private ByteList nextFrame() {
+    public ByteList nextFrame() {
         return opusFrames.get(framePos++);
+    }
+
+    public int getFramePos() {
+        return framePos;
     }
 }
