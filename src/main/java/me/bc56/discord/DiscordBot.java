@@ -191,7 +191,7 @@ public class DiscordBot {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        };
+        }
 
         VoiceSpeakingPayloadData voiceSpeakingPayloadData = new VoiceSpeakingPayloadData();
         voiceSpeakingPayloadData.setDelay(delay);
@@ -348,14 +348,14 @@ public class DiscordBot {
         log.debug("Sending message to Discord channel {} with content \"{}\"", channel, content);
         Call<ChannelMessage> messageCall = discordService.sendMessage(channel, request);
 
-        messageCall.enqueue(new Callback<ChannelMessage>() {
+        messageCall.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NotNull Call<ChannelMessage> call, @NotNull Response<ChannelMessage> response) {
                 log.debug("Successfully sent message!");
             }
 
             @Override
-            public void onFailure(@NotNull Call<ChannelMessage> call, Throwable t) {
+            public void onFailure(@NotNull Call<ChannelMessage> call, @NotNull Throwable t) {
                 log.debug("Failed to send message!");
             }
         });
@@ -413,6 +413,7 @@ public class DiscordBot {
     }
 
     private void sendVoiceHeartbeat() {
+        Thread.currentThread().setName("VoiceGateway-Heartbeat");
         log.debug("Sending heartbeat with nonce {}", heartbeatNonce);
 
         VoiceHeartbeatPayloadData heartbeatData = new VoiceHeartbeatPayloadData();

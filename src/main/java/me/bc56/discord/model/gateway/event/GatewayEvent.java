@@ -1,4 +1,6 @@
 package me.bc56.discord.model.gateway.event;
 
-public interface GatewayEvent {
+import me.bc56.discord.model.Event;
+
+public interface GatewayEvent extends Event {
 }

@@ -68,35 +68,35 @@ public class DiscordGatewayListener extends WebSocketListener {
             //Handle other payloads
             GatewayPayloadData data = payload.getEventData();
 
+            //log.debug("Received dispatch event with name: {}\nRAW Payload: {}\nEND_OF_PAYLOAD", payload.getEventName(), text);
             switch (payload.getOpCode()) {
-                case Constants.GatewayPayloadType.HELLO:
+                case Constants.GatewayPayloadType.HELLO -> {
                     log.debug("Type of Hello!");
                     heartbeatInterval = ((HelloPayloadData) data).getHeartbeatInterval();
                     startHeartbeat(webSocket, heartbeatInterval);
                     eventEmitter.emit(new HelloEvent());
-                    break;
-                case Constants.GatewayPayloadType.HEARTBEAT_ACK:
+                }
+                case Constants.GatewayPayloadType.HEARTBEAT_ACK -> {
                     log.debug("Received ACK!");
                     eventEmitter.emit(new HeartbeakAckEvent());
-                    break;
-                case Constants.GatewayPayloadType.DISPATCH:
+                }
+                case Constants.GatewayPayloadType.DISPATCH -> {
                     DispatchPayloadData dispatchData = (DispatchPayloadData) data;
-                    //log.debug("Received dispatch event with name: {}\nRAW Payload: {}\nEND_OF_PAYLOAD", payload.getEventName(), text);
                     eventEmitter.emit(new DispatchEvent(
                             payload.getEventName(), dispatchData.getEvent()
                     ));
-                    break;
+                }
             }
         }
     }
 
     @Override
-    public void onClosed(WebSocket webSocket, int code, String reason) {
+    public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         super.onClosed(webSocket, code, reason);
     }
 
     @Override
-    public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
         super.onFailure(webSocket, t, response);
     }
 
@@ -129,6 +129,7 @@ public class DiscordGatewayListener extends WebSocketListener {
     }
 
     private void sendHeartbeat(WebSocket webSocket) {
+        Thread.currentThread().setName("Gateway-Heartbeat");
         log.debug("Sending heartbeat...");
 
         GatewayPayload payload = new GatewayPayload();
