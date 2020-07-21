@@ -12,6 +12,7 @@ import me.bc56.discord.model.gateway.payload.data.IdentifyPayloadData;
 import me.bc56.discord.model.api.response.BotGatewayResponse;
 
 import me.bc56.discord.model.gateway.payload.data.VoiceStateUpdatePayloadData;
+import me.bc56.discord.model.voicegateway.event.VoiceConnectedEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceHelloEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceReadyEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceSessionDescriptionEvent;
@@ -155,6 +156,8 @@ public class DiscordBot {
                 address = new InetSocketAddress(event.getIp(), event.getPort());
                 voiceSSRC = event.getSsrc();
 
+                eventEmitters.emit(new VoiceConnectedEvent());
+
                 AudioTrack track = new AudioTrack.Builder("Test").addOpusJSON().build();
 
                 byte[] primSecretKey = new byte[secretKey.length];
@@ -185,13 +188,8 @@ public class DiscordBot {
     }
 
     public void sendSpeaking(int delay, int speaking) {
-        while (voiceSSRC == 0) {
-            try {
-                Thread.sleep(50);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        //TODO: Should we wait for this event here or in Tuna?
+        eventEmitters.waitFor(VoiceConnectedEvent.class);
 
         VoiceSpeakingPayloadData voiceSpeakingPayloadData = new VoiceSpeakingPayloadData();
         voiceSpeakingPayloadData.setDelay(delay);
@@ -252,11 +250,8 @@ public class DiscordBot {
         payload.setOpCode(Constants.GatewayPayloadType.VOICE_STATE_UPDATE);
         payload.setEventData(voiceStateUpdatePayloadData);
 
-        CompletableFuture<VoiceServerUpdateEvent> voiceServerFuture = new CompletableFuture<>();
-        CompletableFuture<VoiceStateUpdateEvent> voiceStateFuture = new CompletableFuture<>();
-
-        eventEmitters.register(VoiceServerUpdateEvent.class, voiceServerFuture::complete);
-        eventEmitters.register(VoiceStateUpdateEvent.class, voiceStateFuture::complete);
+        var voiceServerFuture = eventEmitters.register(VoiceServerUpdateEvent.class);
+        var voiceStateFuture = eventEmitters.register(VoiceStateUpdateEvent.class);
 
         log.debug("Sending status update payload for voice then waiting...");
         gateway.send(webSocket, payload);
@@ -270,6 +265,7 @@ public class DiscordBot {
             voiceServerEvent = voiceServerFuture.get();
             voiceStateEvent = voiceStateFuture.get();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            //TODO: Should we fire an event here?
             log.error("Error in connecting to voice", e);
             return;
         }
