@@ -5,11 +5,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.jna.ptr.PointerByReference;
+import me.bc56.discord.DiscordBot;
 import org.eclipse.collections.api.list.primitive.ByteList;
 import org.eclipse.collections.api.list.primitive.MutableByteList;
 import org.eclipse.collections.api.list.primitive.MutableShortList;
 import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.ShortLists;
+import org.slf4j.LoggerFactory;
 import tomp2p.opuswrapper.Opus;
 
 import java.io.BufferedReader;
@@ -22,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AudioTrack {
-    private static final int OPUS_FRAME_MAX_BYTES = 1275;
+    private static final int OPUS_FRAME_MAX_BYTES = 4096;
     private static final int OPUS_FRAME_SIZE = 960;
-    private static final int OPUS_FRAME_TIME = 20; // 60 ms
+    private static final int OPUS_FRAME_TIME = 20; // 20 ms
 
     private static final int OPUS_SAMPLE_RATE = 48000; // 48 khz
     private static final int OPUS_CHANNEL_COUNT = 2; // stereo audio
@@ -44,16 +46,16 @@ public class AudioTrack {
             opusFrames = new ArrayList<>();
         }
 
-        public Builder addByteFormattedShortPCM(ByteList pcm) {
+        public Builder addByteFormattedShortPCM(byte[] pcm) {
             MutableShortList shorts = ShortLists.mutable.empty();
 
             // Convert bytes to shorts
-            for (int i = 0; i < pcm.size(); i += 2) {
-                byte b0 = pcm.get(i);
-                byte b1 = pcm.get(i + 1);
+            for (int i = 0; i < pcm.length; i += 2) {
+                byte b0 = pcm[i];
+                byte b1 = pcm[i + 1];
 
                 // TODO; This might be the wrong way around - verify!
-                short s = (short) ((((short) b1) << 8) | ((short) b0));
+                short s = (short) (((((short) b1) << 8) & 0xFF00) | (((short) b0)) & 0xFF);
                 shorts.add(s);
             }
 
@@ -78,30 +80,28 @@ public class AudioTrack {
             Opus instance = Opus.INSTANCE;
 
             // Create opus encoder
-            IntBuffer errBuf = IntBuffer.allocate(8); // Yeah, we don't actually use this...
+            IntBuffer errBuf = IntBuffer.allocate(1); // Yeah, we don't actually use this...
             PointerByReference opusEncoder = instance.opus_encoder_create(OPUS_SAMPLE_RATE, OPUS_CHANNEL_COUNT, Opus.OPUS_APPLICATION_AUDIO, errBuf);
-
-            try {
-                Thread.sleep(5000);
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (errBuf.get() != Opus.OPUS_OK) {
+                LoggerFactory.getLogger(AudioTrack.class).info("Error while creating Opus encoder: " + errBuf.get());
             }
 
             int frameCount = pcm.size() / (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT);
             ShortBuffer pcmBuffer = ShortBuffer.allocate(OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT);
             ByteBuffer frameBuffer = ByteBuffer.allocate(OPUS_FRAME_MAX_BYTES);
-            for (int i = 0; i < 1000; i++) { // TODO: Fix segfaults
+            for (int i = 0; i < frameCount; i++) { // TODO: Fix segfaults
                 for (int j = i * (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT); j < (i + 1) * (OPUS_FRAME_SIZE * OPUS_CHANNEL_COUNT); j++) {
                     pcmBuffer.put(pcm.get(j));
                 }
+                pcmBuffer.flip();
 
                 // Encode an opus frame
-                int frameLength = instance.opus_encode(opusEncoder, pcmBuffer, 2880, frameBuffer, OPUS_FRAME_MAX_BYTES);
+                int frameLength = instance.opus_encode(opusEncoder, pcmBuffer, OPUS_FRAME_SIZE, frameBuffer, OPUS_FRAME_MAX_BYTES);
 
-                byte[] filled = new byte[frameLength];
-                System.arraycopy(frameBuffer.array(), 0, filled, 0, frameLength);
+                byte[] encoded = new byte[frameLength];
+                frameBuffer.get(encoded);
 
-                opusFrames.add(ByteLists.immutable.of(filled));
+                opusFrames.add(ByteLists.immutable.of(encoded));
 
                 pcmBuffer.clear();
                 frameBuffer.clear();
@@ -114,7 +114,6 @@ public class AudioTrack {
         }
 
         public Builder addOpusJSON() {
-            // TODO; Don't hardcode this!
             try {
                 File json = new File("test.json");
                 BufferedReader reader = new BufferedReader(new FileReader(json));

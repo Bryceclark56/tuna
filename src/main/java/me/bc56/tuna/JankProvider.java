@@ -5,15 +5,19 @@ import me.bc56.discord.audio.AudioTrack;
 
 public class JankProvider implements AudioProvider {
     private AudioTrack track;
-    private boolean playing = false;
+    private boolean playing;
 
-    public JankProvider(AudioTrack track) {
-        this.track = track;
+    public JankProvider() {
+        this.playing = false;
     }
 
     @Override
     public synchronized boolean canProvideFrame() {
-        return track.canProvideFrame() && playing;
+        if (track != null) {
+            return track.canProvideFrame() && playing;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -23,10 +27,18 @@ public class JankProvider implements AudioProvider {
 
     @Override
     public synchronized short getFramePos() {
-        return track.getFramePos();
+        if (track != null) {
+            return track.getFramePos();
+        } else {
+            return 0;
+        }
     }
 
     public synchronized void setPlaying(boolean playing) {
         this.playing = playing;
+    }
+
+    public synchronized void addTrack(AudioTrack track) {
+        this.track = track;
     }
 }

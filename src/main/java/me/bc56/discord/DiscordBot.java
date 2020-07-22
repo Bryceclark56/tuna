@@ -199,7 +199,7 @@ public class DiscordBot {
             }
         };
 
-        var scheduler = Executors.newSingleThreadScheduledExecutor();
+        var scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> new Thread(runnable, "Voice-UDP"));
         voiceUDPFuture = scheduler.scheduleAtFixedRate(task, 0, 19, TimeUnit.MILLISECONDS);
     }
 

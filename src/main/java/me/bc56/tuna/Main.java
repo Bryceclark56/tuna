@@ -10,11 +10,15 @@ import me.bc56.discord.model.gateway.event.MessageCreateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
     static Logger log = LoggerFactory.getLogger(Main.class);
     static final char COMMAND_DELIM = '!';
+
+    private static Object LOCK = new Object();
 
     public static void main(String[] args) {
         String authToken = System.getenv("DISCORD_AUTH_TOKEN");
@@ -27,9 +31,16 @@ public class Main {
         bot.start();
 
         // Set up and register the audio provider
-        AudioTrack testTrack = new AudioTrack.Builder("test").addOpusJSON().build();
-        JankProvider jankProvider = new JankProvider(testTrack);
-        bot.registerAudioProvider(jankProvider);
+        JankProvider jankProvider = new JankProvider();
+        try {
+            byte[] audio = Files.readAllBytes(new File("test.pcm").toPath());
+
+            AudioTrack testTrack = new AudioTrack.Builder("test").addByteFormattedShortPCM(audio).build();
+            jankProvider.addTrack(testTrack);
+            bot.registerAudioProvider(jankProvider);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         bot.on(MessageCreateEvent.class, (event) -> {
             ChannelMessage message = event.getMessage();
@@ -63,7 +74,13 @@ public class Main {
             }
         });
 
-        while (true) ;
+        synchronized (LOCK) {
+            try {
+                LOCK.wait();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     static void handleDispatch(DispatchEvent event) {
