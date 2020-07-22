@@ -1,16 +1,13 @@
-package me.bc56.discord.util;
+package me.bc56.discord.audio;
 
 import club.minnced.opus.util.OpusLibrary;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
 import com.sun.jna.ptr.PointerByReference;
 import org.eclipse.collections.api.list.primitive.ByteList;
 import org.eclipse.collections.api.list.primitive.MutableByteList;
 import org.eclipse.collections.api.list.primitive.MutableShortList;
-import org.eclipse.collections.api.list.primitive.ShortList;
 import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.ShortLists;
 import tomp2p.opuswrapper.Opus;
@@ -35,7 +32,7 @@ public class AudioTrack {
     private String name;
     private List<ByteList> opusFrames;
 
-    private int framePos = 0;
+    private short framePos = 0;
 
     public static class Builder {
         private String name;
@@ -158,11 +155,11 @@ public class AudioTrack {
         return framePos < (opusFrames.size() - 1);
     }
 
-    public ByteList nextFrame() {
-        return opusFrames.get(framePos++);
+    public byte[] provideFrame() {
+        return opusFrames.get(framePos++).toArray();
     }
 
-    public int getFramePos() {
+    public short getFramePos() {
         return framePos;
     }
 }

@@ -1,19 +1,16 @@
-package me.bc56.discord.util;
+package me.bc56.discord.audio;
 
-import org.abstractj.kalium.NaCl;
-import org.abstractj.kalium.crypto.Box;
 import org.abstractj.kalium.crypto.SecretBox;
-import org.eclipse.collections.api.list.primitive.ByteList;
 
 public class AudioPacket {
     private static final byte VERSION = (byte) 0x80;
     private static final byte PAYLOAD_TYPE = (byte) 0x78;
 
     private byte[] header;
-    private ByteList audio;
+    private byte[] audio;
     private byte[] secretKey;
 
-    public AudioPacket(short sequence, int timestamp, int ssrc, ByteList audio, byte[] secretKey) {
+    public AudioPacket(short sequence, int timestamp, int ssrc, byte[] audio, byte[] secretKey) {
         this.header = new byte[12];
 
         header[0] = VERSION;
@@ -43,7 +40,7 @@ public class AudioPacket {
         }
 
         SecretBox box = new SecretBox(secretKey);
-        byte[] encrypted = box.encrypt(nonce, audio.toArray());
+        byte[] encrypted = box.encrypt(nonce, audio);
 
         byte[] packet = new byte[header.length + encrypted.length];
         for (int i = 0; i < 12; i++) {

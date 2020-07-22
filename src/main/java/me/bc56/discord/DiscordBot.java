@@ -1,5 +1,6 @@
 package me.bc56.discord;
 
+import me.bc56.discord.audio.AudioProvider;
 import me.bc56.discord.model.ChannelMessage;
 import me.bc56.discord.model.DiscordUser;
 import me.bc56.discord.model.Guild;
@@ -22,14 +23,11 @@ import me.bc56.discord.model.voicegateway.payload.data.VoiceIdentifyPayloadData;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceSelectProtocolPayloadData;
 import me.bc56.discord.model.voicegateway.payload.data.VoiceSpeakingPayloadData;
 import me.bc56.discord.service.DiscordService;
-import me.bc56.discord.util.AudioPacket;
-import me.bc56.discord.util.AudioTrack;
+import me.bc56.discord.audio.AudioPacket;
 import me.bc56.discord.util.Constants;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
-import org.eclipse.collections.api.list.primitive.ByteList;
-import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,16 +36,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.time.Instant;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-
-import static me.bc56.discord.util.Zoom.b;
 
 public class DiscordBot {
     static Logger log = LoggerFactory.getLogger(DiscordBot.class);
@@ -70,6 +62,9 @@ public class DiscordBot {
 
     private DatagramSocket voiceSocket;
     private InetSocketAddress address;
+    private AudioProvider audioProvider;
+    private boolean speaking;
+    private ScheduledFuture<?> voiceUDPFuture;
 
     private EventsManager eventEmitters;
 
@@ -78,7 +73,6 @@ public class DiscordBot {
     private long heartbeatNonce;
 
     private short voiceSequence;
-    private int voiceSSRC;
     private Byte[] secretKey;
 
     public DiscordBot(String authToken, String userAgent, Retrofit retrofit) {
@@ -96,6 +90,8 @@ public class DiscordBot {
 
         log.debug("Initializing gateway listener...");
         gateway = new DiscordGatewayListener(authToken);
+
+        this.speaking = false;
 
         registerInternalEvents();
     }
@@ -150,50 +146,61 @@ public class DiscordBot {
 
             voiceGateway.send(voiceWebSocket, voiceGatewayPayload);
 
-            try {
-                log.debug("Opening UDP socket...");
-                voiceSocket = new DatagramSocket();
-                address = new InetSocketAddress(event.getIp(), event.getPort());
-                voiceSSRC = event.getSsrc();
+            initUDPFuture(event.getIp(), event.getPort(), event.getSsrc());
+        });
+    }
 
-                eventEmitters.emit(new VoiceConnectedEvent());
+    private void initUDPFuture(String ip, int port, int ssrc) {
+        log.debug("Opening UDP socket...");
+        try {
+            voiceSocket = new DatagramSocket();
+        } catch (Exception e) {
+            log.error("Failed to initialize UDP thread for voice: ", e);
+            return;
+        }
+        address = new InetSocketAddress(ip, port);
 
-                AudioTrack track = new AudioTrack.Builder("Test").addOpusJSON().build();
+        eventEmitters.emit(new VoiceConnectedEvent());
+        Runnable task = () -> {
+            if ((audioProvider != null) && (audioProvider.canProvideFrame())) {
+                if (!speaking) {
+                    sendSpeaking(0, 1, ssrc);
+                    speaking = true;
+                }
+
+                short frame = audioProvider.getFramePos();
+
+                int timestamp = 960 * ((int) frame);
+                byte[] audio = audioProvider.provideFrame();
 
                 byte[] primSecretKey = new byte[secretKey.length];
                 for (int i = 0; i < secretKey.length; i++) {
                     primSecretKey[i] = secretKey[i];
                 }
-                Runnable task = () -> {
-                  if (track.canProvideFrame()) {
-                      int frame = track.getFramePos();
 
-                      int timestamp = 960 * frame;
-
-                      AudioPacket packet = new AudioPacket((short) frame, timestamp, voiceSSRC, track.nextFrame(), primSecretKey);
-                      try {
-                          sendVoiceAudio(packet.getEncryptedPacket());
-                      } catch (Exception e) {
-                          e.printStackTrace();
-                      }
-                  }
-                };
-
-                var scheduler = Executors.newSingleThreadScheduledExecutor();
-                scheduler.scheduleAtFixedRate(task, 0, 19, TimeUnit.MILLISECONDS);
-            } catch (SocketException e) {
-                log.error("Problem with the voice UDP socket!", e);
+                AudioPacket packet = new AudioPacket(frame, timestamp, ssrc, audio, primSecretKey);
+                sendVoiceAudio(packet.getEncryptedPacket());
             }
-        });
+
+            // Could not provide audio frame but speaking
+            if (speaking) {
+                sendSpeaking(0, 0, ssrc);
+            }
+        };
+
+        var scheduler = Executors.newSingleThreadScheduledExecutor();
+        voiceUDPFuture = scheduler.scheduleAtFixedRate(task, 0, 19, TimeUnit.MILLISECONDS);
     }
 
-    public void sendSpeaking(int delay, int speaking) {
-        //TODO: Should we wait for this event here or in Tuna?
-        eventEmitters.waitFor(VoiceConnectedEvent.class);
+    private void killUDPFuture() { // TODO: Actually use this
+        voiceUDPFuture.cancel(true);
+        voiceUDPFuture = null;
+    }
 
+    private void sendSpeaking(int delay, int speaking, int ssrc) {
         VoiceSpeakingPayloadData voiceSpeakingPayloadData = new VoiceSpeakingPayloadData();
         voiceSpeakingPayloadData.setDelay(delay);
-        voiceSpeakingPayloadData.setSsrc(voiceSSRC);
+        voiceSpeakingPayloadData.setSsrc(ssrc);
         voiceSpeakingPayloadData.setSpeaking(speaking);
 
         VoiceGatewayPayload payload = new VoiceGatewayPayload();
@@ -203,9 +210,14 @@ public class DiscordBot {
         voiceGateway.send(voiceWebSocket, payload);
     }
 
-    public void sendVoiceAudio(byte[] bytes) throws IOException {
+    public void sendVoiceAudio(byte[] bytes) {
         DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address);
-        voiceSocket.send(packet);
+
+        try {
+            voiceSocket.send(packet);
+        } catch (Exception e) {
+            log.error("Failed to send audio packet: ", e);
+        }
     }
 
     public void disconnectFromVoice(String guildId) {
@@ -232,7 +244,6 @@ public class DiscordBot {
         voiceWebSocket.close(4014, "Client closed voice websocket");
         voiceWebSocket = null;
 
-        voiceSSRC = 0;
         voiceSequence = 0;
     }
 
@@ -368,8 +379,7 @@ public class DiscordBot {
             if (guildResponse.isSuccessful()) {
                 return guildResponse.body();
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.warn("Unable to get guild {}", guildId);
         }
 
@@ -442,8 +452,7 @@ public class DiscordBot {
             return new Request.Builder()
                     .url(gatewayURL)
                     .build();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("Unable to get gateway URL!");
 
             e.printStackTrace();
@@ -464,5 +473,9 @@ public class DiscordBot {
 
     public String getState() {
         return state;
+    }
+
+    public <T extends AudioProvider> void registerAudioProvider(T provider) {
+        audioProvider = provider;
     }
 }

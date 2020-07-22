@@ -2,6 +2,7 @@ package me.bc56.tuna;
 
 import com.google.gson.JsonObject;
 import me.bc56.discord.DiscordBot;
+import me.bc56.discord.audio.AudioTrack;
 import me.bc56.discord.factory.DiscordBotFactory;
 import me.bc56.discord.model.ChannelMessage;
 import me.bc56.discord.model.gateway.event.DispatchEvent;
@@ -25,7 +26,7 @@ public class Main {
         log.info("Starting bot");
         bot.start();
 
-        bot.on(MessageCreateEvent.class, (event)->{
+        bot.on(MessageCreateEvent.class, (event) -> {
             ChannelMessage message = event.getMessage();
             String content = message.getContent();
             String author = message.getAuthor().getUsername();
@@ -39,23 +40,24 @@ public class Main {
                 log.debug("Attempting to stop bot");
                 bot.stop();
                 System.exit(0);
-            }
-            else if (content.equalsIgnoreCase("!ping")) {
+            } else if (content.equalsIgnoreCase("!ping")) {
                 log.debug("Responding to ping!");
                 String channelId = message.getChannelId();
                 bot.sendMessage(channelId, "Pong!");
-            }
-            else if (content.equalsIgnoreCase("!join")) {
+            } else if (content.equalsIgnoreCase("!join")) {
                 String guild = message.getGuildId();
 
                 bot.sendMessage(message.getChannelId(), "Connecting to voice channel!");
                 bot.connectToVoiceChannel(guild, "99691464426012672");
-                log.debug("Connected to voice, sending speaking");
-                bot.sendSpeaking(0, 1);
+            } else if (content.equalsIgnoreCase("!play")) {
+                // Set up audio provider
+                AudioTrack testTrack = new AudioTrack.Builder("test").addOpusJSON().build();
+                JankProvider jankProvider = new JankProvider(testTrack);
+                bot.registerAudioProvider(jankProvider);
             }
         });
 
-        while(true);
+        while (true) ;
     }
 
     static void handleDispatch(DispatchEvent event) {
