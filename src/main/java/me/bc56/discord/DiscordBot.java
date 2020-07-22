@@ -65,6 +65,7 @@ public class DiscordBot {
     private AudioProvider audioProvider;
     private boolean speaking;
     private ScheduledFuture<?> voiceUDPFuture;
+    private int silenceCount = 0;
 
     private EventsManager eventEmitters;
 
@@ -146,11 +147,12 @@ public class DiscordBot {
 
             voiceGateway.send(voiceWebSocket, voiceGatewayPayload);
 
-            initUDPFuture(event.getIp(), event.getPort(), event.getSsrc());
+            eventEmitters.waitFor(VoiceSessionDescriptionEvent.class);
+            initUDPFuture(event.getIp(), event.getPort(), event.getSsrc(), secretKey);
         });
     }
 
-    private void initUDPFuture(String ip, int port, int ssrc) {
+    private void initUDPFuture(String ip, int port, int ssrc, Byte[] secretKey) {
         log.debug("Opening UDP socket...");
         try {
             voiceSocket = new DatagramSocket();
@@ -162,29 +164,38 @@ public class DiscordBot {
 
         eventEmitters.emit(new VoiceConnectedEvent());
         Runnable task = () -> {
-            if ((audioProvider != null) && (audioProvider.canProvideFrame())) {
-                if (!speaking) {
-                    sendSpeaking(0, 1, ssrc);
-                    speaking = true;
-                }
-
+            if ((audioProvider != null)) {
                 short frame = audioProvider.getFramePos();
-
                 int timestamp = 960 * ((int) frame);
-                byte[] audio = audioProvider.provideFrame();
 
                 byte[] primSecretKey = new byte[secretKey.length];
                 for (int i = 0; i < secretKey.length; i++) {
                     primSecretKey[i] = secretKey[i];
                 }
 
-                AudioPacket packet = new AudioPacket(frame, timestamp, ssrc, audio, primSecretKey);
-                sendVoiceAudio(packet.getEncryptedPacket());
-            }
+                if (audioProvider.canProvideFrame()) {
+                    if (!speaking) {
+                        sendSpeaking(0, 1, ssrc);
+                        speaking = true;
+                    }
 
-            // Could not provide audio frame but speaking
-            if (speaking) {
-                sendSpeaking(0, 0, ssrc);
+                    byte[] audio = audioProvider.provideFrame();
+
+                    AudioPacket packet = new AudioPacket(frame, timestamp, ssrc, audio, primSecretKey);
+                    sendVoiceAudio(packet.getEncryptedPacket());
+                } else if (speaking) { // Speaking but can't provide a frame!
+                    if (silenceCount < 5) {
+                        AudioPacket packet = new AudioPacket(frame, timestamp, ssrc, new byte[] {(byte) 0xF8, (byte) 0xFF, (byte) 0xFE}, primSecretKey);
+                        sendVoiceAudio(packet.getEncryptedPacket());
+                        silenceCount++;
+                    } else if (silenceCount == 5) {
+                        sendSpeaking(0, 0, ssrc);
+                        speaking = false;
+                        silenceCount = 0;
+                    }
+                }
+            } else {
+                log.info("I'm a little teapot");
             }
         };
 
@@ -192,9 +203,11 @@ public class DiscordBot {
         voiceUDPFuture = scheduler.scheduleAtFixedRate(task, 0, 19, TimeUnit.MILLISECONDS);
     }
 
-    private void killUDPFuture() { // TODO: Actually use this
-        voiceUDPFuture.cancel(true);
-        voiceUDPFuture = null;
+    private void killUDPFuture() {
+        if (voiceUDPFuture != null) {
+            voiceUDPFuture.cancel(true);
+            voiceUDPFuture = null;
+        }
     }
 
     private void sendSpeaking(int delay, int speaking, int ssrc) {
@@ -237,6 +250,7 @@ public class DiscordBot {
 
         gateway.send(webSocket, payload);
 
+        killUDPFuture();
 
         voiceSocket.close();
         voiceSocket = null;

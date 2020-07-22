@@ -26,6 +26,11 @@ public class Main {
         log.info("Starting bot");
         bot.start();
 
+        // Set up and register the audio provider
+        AudioTrack testTrack = new AudioTrack.Builder("test").addOpusJSON().build();
+        JankProvider jankProvider = new JankProvider(testTrack);
+        bot.registerAudioProvider(jankProvider);
+
         bot.on(MessageCreateEvent.class, (event) -> {
             ChannelMessage message = event.getMessage();
             String content = message.getContent();
@@ -50,10 +55,11 @@ public class Main {
                 bot.sendMessage(message.getChannelId(), "Connecting to voice channel!");
                 bot.connectToVoiceChannel(guild, "99691464426012672");
             } else if (content.equalsIgnoreCase("!play")) {
-                // Set up audio provider
-                AudioTrack testTrack = new AudioTrack.Builder("test").addOpusJSON().build();
-                JankProvider jankProvider = new JankProvider(testTrack);
-                bot.registerAudioProvider(jankProvider);
+                jankProvider.setPlaying(true);
+            } else if (content.equalsIgnoreCase("!pause")) {
+                jankProvider.setPlaying(false);
+            } else if (content.equalsIgnoreCase("!disconnect")) {
+                bot.disconnectFromVoice(message.getGuildId());
             }
         });
 
