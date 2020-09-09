@@ -52,7 +52,7 @@ class EventManagerTest {
             e.printStackTrace();
         }*/
 
-        verify(mockEventReceiver).enqueue(testEvent);
+        verify(mockEventReceiver, timeout(100)).enqueue(testEvent);
     }
 
     @Test
@@ -77,7 +77,7 @@ class EventManagerTest {
             e.printStackTrace();
         }*/
 
-        verify(mockEventReceiver, never()).enqueue(testEvent);
+        verify(mockEventReceiver, timeout(100).times(0)).enqueue(testEvent);
     }
 
     @AfterAll
