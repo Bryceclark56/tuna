@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Main {
     static Logger log = LoggerFactory.getLogger(Main.class);
-    static final char COMMAND_DELIM = '!';
+    static final String COMMAND_DELIM = "!";
 
-    private static Object LOCK = new Object();
+    private static final Object LOCK = new Object();
 
     public static void main(String[] args) {
         String authToken = System.getenv("DISCORD_AUTH_TOKEN");
@@ -48,7 +48,7 @@ public class Main {
             String author = message.getAuthor().getUsername();
             log.debug("Processing channel message in tuna...");
 
-            if (author.equalsIgnoreCase("GenericBot") || !content.startsWith(String.valueOf(COMMAND_DELIM))) {
+            if (author.equalsIgnoreCase("GenericBot") || !content.startsWith(COMMAND_DELIM)) {
                 return;
             }
 
