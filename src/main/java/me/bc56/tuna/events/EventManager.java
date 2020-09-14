@@ -28,22 +28,20 @@ public class EventManager extends TunaModule {
     }
 
     @Override
-    protected void loop() {
-        while (isRunning()) {
-            Event event;
-            try {
-                event = queuedEvents.take();
-            } catch (InterruptedException e) {
-                log.error("EventManager interrupted while waiting for event", e);
-                continue;
-            }
-
-            eventReceivers.forEach((receiver, filter) -> {
-                if (filter.checkEvent(event)) {
-                    receiver.enqueue(event);
-                }
-            });
+    public void loop() {
+        Event event;
+        try {
+            event = queuedEvents.take();
+        } catch (InterruptedException e) {
+            log.error("EventManager interrupted while waiting for event", e);
+            return;
         }
+
+        eventReceivers.forEach((receiver, filter) -> {
+            if (filter.checkEvent(event)) {
+                receiver.enqueue(event);
+            }
+        });
     }
 
     public void submitEvent(Event event) {

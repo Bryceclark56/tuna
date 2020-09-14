@@ -7,11 +7,10 @@ public abstract class TunaModule {
 
     protected boolean isRunning = false;
 
-    abstract protected void loop();
+    public abstract void loop();
 
     public void start() {
         isRunning = true;
-        loop();
     }
 
     public void stop() {
