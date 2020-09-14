@@ -39,7 +39,7 @@ public class Main {
             jankProvider.addTrack(testTrack);
             bot.registerAudioProvider(jankProvider);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Problem creating audio provider", e);
         }
 
         bot.on(MessageCreateEvent.class, (event) -> {

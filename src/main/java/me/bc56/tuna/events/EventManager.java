@@ -1,5 +1,6 @@
 package me.bc56.tuna.events;
 
+import me.bc56.tuna.TunaModule;
 import me.bc56.tuna.events.type.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
 
-public class EventManager {
+public class EventManager extends TunaModule {
     private static Logger log = LoggerFactory.getLogger(EventManager.class);
     private static EventManager instance;
 
@@ -26,8 +27,9 @@ public class EventManager {
         return instance;
     }
 
-    private void loop() {
-        while (isRunning) {
+    @Override
+    protected void loop() {
+        while (isRunning()) {
             Event event;
             try {
                 event = queuedEvents.take();
@@ -44,15 +46,6 @@ public class EventManager {
         }
     }
 
-    public void start() {
-        isRunning = true;
-        loop();
-    }
-
-    public void stop() {
-        isRunning = false;
-    }
-
     public void submitEvent(Event event) {
         try {
             queuedEvents.put(event);
@@ -65,9 +58,5 @@ public class EventManager {
 
     public void registerReceiver(EventReceiver receiver, EventFilter filter) {
         eventReceivers.put(receiver, filter);
-    }
-
-    public boolean isRunning() {
-        return isRunning;
     }
 }

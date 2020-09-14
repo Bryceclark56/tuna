@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MessageHandler extends TunaModule implements EventReceiver, EventProducer {
     static Logger log = LoggerFactory.getLogger(MessageHandler.class);
 
-    private static final LinkedBlockingQueue<ChannelMessage> messages = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<ChannelMessage> messages = new LinkedBlockingQueue<>();
 
     DiscordBot bot;
 
@@ -28,11 +28,11 @@ public class MessageHandler extends TunaModule implements EventReceiver, EventPr
         this.eventManager = eventManager;
 
         registerEventReceiver();
-        loop();
     }
 
-    private void loop() {
-        while(!bot.isStopped()) {
+    @Override
+    protected void loop() {
+        while(isRunning()) {
             if (messages.isEmpty()) {
                 Thread.yield();
                 continue;
