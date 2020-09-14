@@ -31,15 +31,13 @@ public class MessageHandler extends TunaModule implements EventReceiver, EventPr
     }
 
     @Override
-    protected void loop() {
-        while(isRunning()) {
-            if (messages.isEmpty()) {
-                Thread.yield();
-                continue;
-            }
-
-            messages.forEach(this::handleMessage);
+    public synchronized void loop() {
+        if (messages.isEmpty()) {
+            Thread.yield();
+            return;
         }
+
+        messages.forEach(this::handleMessage);
     }
 
     private void handleMessage(ChannelMessage message) {
