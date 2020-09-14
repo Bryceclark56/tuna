@@ -1,0 +1,78 @@
+package me.bc56.tuna;
+
+import me.bc56.discord.DiscordBot;
+import me.bc56.discord.model.ChannelMessage;
+import me.bc56.tuna.events.*;
+import me.bc56.tuna.events.type.Event;
+import me.bc56.tuna.events.type.MessageCommandEvent;
+import me.bc56.tuna.events.type.MessageEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.LinkedBlockingQueue;
+
+public class MessageHandler extends TunaModule implements EventReceiver, EventProducer {
+    static Logger log = LoggerFactory.getLogger(MessageHandler.class);
+
+    private static final LinkedBlockingQueue<ChannelMessage> messages = new LinkedBlockingQueue<>();
+
+    DiscordBot bot;
+
+    String commandDelimiter;
+
+    EventManager eventManager;
+
+    public MessageHandler(EventManager eventManager, DiscordBot bot, String commandDelimiter) {
+        this.bot = bot;
+        this.commandDelimiter = commandDelimiter;
+        this.eventManager = eventManager;
+
+        registerEventReceiver();
+        loop();
+    }
+
+    private void loop() {
+        while(!bot.isStopped()) {
+            if (messages.isEmpty()) {
+                Thread.yield();
+                continue;
+            }
+
+            messages.forEach(this::handleMessage);
+        }
+    }
+
+    private void handleMessage(ChannelMessage message) {
+        if (isCommand(message)) {
+            log.debug("Determined message to be a command, handing over control...");
+            MessageCommandEvent event = new MessageCommandEvent(this.moduleId, message);
+            eventManager.submitEvent(event);
+        }
+    }
+
+    public boolean isCommand(ChannelMessage message) {
+        return message.getContent().startsWith(commandDelimiter);
+    }
+
+    private void registerEventReceiver() {
+        EventFilter filter = new EventFilter();
+        filter.addEventType(EventConstants.NEW_CHANNEL_MESSAGE);
+
+        eventManager.registerReceiver(this, filter);
+    }
+
+    @Override
+    public synchronized <E extends Event> void enqueue(E event) {
+        if (!(event instanceof MessageEvent)) {
+            return;
+        }
+
+        MessageEvent messageEvent = (MessageEvent) event;
+
+        try {
+            messages.put(messageEvent.message);
+        } catch (InterruptedException e) {
+            log.error("Problem enqueueing MessageEvent", e);
+        }
+    }
+}

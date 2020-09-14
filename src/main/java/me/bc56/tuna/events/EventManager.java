@@ -12,9 +12,9 @@ public class EventManager {
     private static Logger log = LoggerFactory.getLogger(EventManager.class);
     private static EventManager instance;
 
-    private SynchronousQueue<Event> queuedEvents = new SynchronousQueue<>();
+    private final SynchronousQueue<Event> queuedEvents = new SynchronousQueue<>();
     //TODO: Allow multiple filters
-    private Map<EventReceiver, EventFilter> eventReceivers = new HashMap<>();
+    private final Map<EventReceiver, EventFilter> eventReceivers = new HashMap<>();
 
     private boolean isRunning = false;
 
