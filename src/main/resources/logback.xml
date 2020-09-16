@@ -8,6 +8,8 @@
         </encoder>
     </appender>
 
+    <logger name="me.bc56.discord" level="info"/>
+
     <root level="debug">
         <appender-ref ref="STDOUT" />
     </root>
