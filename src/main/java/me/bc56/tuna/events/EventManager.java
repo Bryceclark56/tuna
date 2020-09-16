@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 public class EventManager extends TunaModule {
@@ -14,12 +15,10 @@ public class EventManager extends TunaModule {
     private static EventManager instance;
 
     private final SynchronousQueue<Event> queuedEvents = new SynchronousQueue<>();
-    //TODO: Allow multiple filters
+    //TODO: Allow multiple filters per receiver
     private final Map<EventReceiver, EventFilter> eventReceivers = new HashMap<>();
 
-    private boolean isRunning = false;
-
-    public synchronized static EventManager getInstance() {
+    public static EventManager getInstance() {
         if (instance == null) {
             instance = new EventManager();
         }
@@ -30,13 +29,16 @@ public class EventManager extends TunaModule {
     @Override
     public void loop() {
         Event event;
+
         try {
+            log.debug("Waiting for event to be queued...");
             event = queuedEvents.take();
         } catch (InterruptedException e) {
-            log.error("EventManager interrupted while waiting for event", e);
+            log.error("Interrupted while waiting for event", e);
             return;
         }
 
+        log.debug("New event {}! Checking against filters!", event.type);
         eventReceivers.forEach((receiver, filter) -> {
             if (filter.checkEvent(event)) {
                 receiver.enqueue(event);

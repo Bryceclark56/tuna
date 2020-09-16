@@ -13,9 +13,15 @@ public class ThreadManager {
     }
 
     public void runCoreModule(TunaModule module) {
-        var executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor;
 
-        dedicatedExecutors.put(module, Executors.newSingleThreadExecutor());
+        if (!dedicatedExecutors.containsKey(module)) {
+            executor = Executors.newSingleThreadExecutor();
+            dedicatedExecutors.put(module, executor);
+        }
+        else {
+            executor = dedicatedExecutors.get(module);
+        }
 
         module.start();
         executor.execute(() -> {
@@ -25,12 +31,24 @@ public class ThreadManager {
         });
     }
 
+    public boolean stopCoreModule(TunaModule module) {
+        var executor = dedicatedExecutors.get(module);
+
+        if (executor == null) {
+            return false;
+        }
+
+        module.stop();
+        executor.shutdown();
+        return true;
+    }
+
     //Generic task execution on general thread pool
-    public <E> FutureTask<E> execute(Callable<E> task) {
-        FutureTask<E> taskFuture = new FutureTask<>(task);
+    public void execute(Runnable task) {
+        genericExecutor.execute(task);
+    }
 
-        genericExecutor.submit(taskFuture);
-
-        return taskFuture;
+    public void unregisterCoreModule(TunaModule module) {
+        dedicatedExecutors.remove(module);
     }
 }

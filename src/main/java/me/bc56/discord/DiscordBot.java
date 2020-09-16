@@ -38,6 +38,7 @@ import retrofit2.Retrofit;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
@@ -362,9 +363,21 @@ public class DiscordBot {
         eventEmitters.register(event, callback);
     }
 
+    private int rate = 0;
+    private long rateHit = 0;
     public void sendMessage(String channel, String content) {
         ChannelMessageRequest request = new ChannelMessageRequest();
         request.setContent(content);
+
+        if (rate >= 10) {
+            if (System.currentTimeMillis() - rateHit >= 10000) {
+                rate = 0;
+            }
+            else {
+                log.error("Unable to send message, limit hit");
+                return;
+            }
+        }
 
         log.debug("Sending message to Discord channel {} with content \"{}\"", channel, content);
         Call<ChannelMessage> messageCall = discordService.sendMessage(channel, request);
@@ -380,6 +393,11 @@ public class DiscordBot {
                 log.debug("Failed to send message!");
             }
         });
+
+        if (++rate >= 10) {
+            rateHit = System.currentTimeMillis();
+            log.error("Limit reached for sending messages");
+        }
     }
 
     public Guild getGuild(String guildId) {
@@ -448,18 +466,44 @@ public class DiscordBot {
     //TODO: Create separate GatewayService
     public Request getGatewayRequest() {
         log.debug("Getting gateway request...");
-        Call<BotGatewayResponse> gatewayCall = discordService.botGateway();
-        String gatewayURL;
+        Call<BotGatewayResponse> gatewayCall;
+        String gatewayURL = "";
 
         try {
-            Response<BotGatewayResponse> response = gatewayCall.execute();
+            boolean shouldRetry = false;
+            BotGatewayResponse responseBody;
+            do {
+                gatewayCall = discordService.botGateway();
+                Response<BotGatewayResponse> response = gatewayCall.execute();
 
-            log.debug(response.toString());
+                log.debug(response.toString());
 
-            BotGatewayResponse responseBody = response.body();
+                responseBody = response.body();
 
-            assert responseBody != null;
-            gatewayURL = responseBody.getUrl();
+                if (response.code() != 200) {
+                    log.error("Problem getting Discord gateway (code was {}): {}", response.code(), response.message());
+
+                    if (response.code() == 429) {
+                        long retry = Long.parseLong(Objects.requireNonNull(response.headers().get("retry-after")));
+                        log.error("Too many requests (limit is {}), retrying after {}; isGlobal = {}", response.headers().get("X-RateLimit-Limit"), retry, response.headers().get("X-RateLimit-Global"));
+                        try {
+                            shouldRetry = true;
+                            Thread.sleep(retry + 10000);
+                            log.error("Retrying...");
+                        } catch (InterruptedException e) {
+                            log.error("Interrupted while waiting to retry GatewayRequest", e);
+                        }
+                    }
+                }
+            } while(shouldRetry);
+
+            if (responseBody != null) {
+                gatewayURL = responseBody.getUrl();
+            }
+            else {
+                log.error("Null response body while getting gateway");
+                System.exit(1);
+            }
 
             log.debug("Using gateway URL: " + gatewayURL);
 

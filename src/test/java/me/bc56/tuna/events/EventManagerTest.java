@@ -1,5 +1,6 @@
 package me.bc56.tuna.events;
 
+import me.bc56.tuna.ThreadManager;
 import me.bc56.tuna.events.type.Event;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,23 +13,22 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EventManagerTest {
 
-    static ExecutorService executorService;
+    static ThreadManager threadManager;
 
     static EventManager eventManager;
     @Mock EventReceiver mockEventReceiver;
 
     @BeforeAll
     static void setup() {
-        executorService = Executors.newFixedThreadPool(2);
+        threadManager = new ThreadManager();
 
         eventManager = EventManager.getInstance();
-        executorService.submit(() -> eventManager.start());
+        threadManager.runCoreModule(eventManager);
     }
 
     @Test
@@ -44,13 +44,7 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        executorService.execute(() -> eventManager.submitEvent(testEvent));
-
-        /*try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
+        threadManager.execute(() -> eventManager.submitEvent(testEvent));
 
         verify(mockEventReceiver, timeout(100)).enqueue(testEvent);
     }
@@ -69,20 +63,13 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        executorService.execute(() -> eventManager.submitEvent(testEvent));
-
-        /*try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
+        threadManager.execute(() -> eventManager.submitEvent(testEvent));
 
         verify(mockEventReceiver, timeout(100).times(0)).enqueue(testEvent);
     }
 
     @AfterAll
     static void teardown() {
-        eventManager.stop();
-        //executorService.shutdown();
+        threadManager.stopCoreModule(eventManager);
     }
 }

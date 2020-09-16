@@ -31,16 +31,16 @@ public class MessageHandler extends TunaModule implements EventReceiver, EventPr
     }
 
     @Override
-    public synchronized void loop() {
-        if (messages.isEmpty()) {
-            Thread.yield();
-            return;
+    public void loop() {
+        try {
+            handleMessage(messages.take());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-
-        messages.forEach(this::handleMessage);
     }
 
     private void handleMessage(ChannelMessage message) {
+        log.debug("New message!");
         if (isCommand(message)) {
             log.debug("Determined message to be a command, handing over control...");
             MessageCommandEvent event = new MessageCommandEvent(this.moduleId, message);
@@ -60,7 +60,7 @@ public class MessageHandler extends TunaModule implements EventReceiver, EventPr
     }
 
     @Override
-    public synchronized <E extends Event> void enqueue(E event) {
+    public <E extends Event> void enqueue(E event) {
         if (!(event instanceof MessageEvent)) {
             return;
         }

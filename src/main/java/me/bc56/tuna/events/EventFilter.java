@@ -16,7 +16,19 @@ public class EventFilter {
      * @return      true if event matches filters, false otherwise
      */
     public boolean checkEvent(Event event) {
-        return eventSources.contains(event.source) && eventTypes.contains(event.type);
+        boolean test;
+
+        if (eventSources.isEmpty()) {
+            test = true;
+        }
+        else {
+            test = eventSources.contains(event.source);
+        }
+
+        if (!eventTypes.isEmpty()) {
+            test &= eventTypes.contains(event.type);
+        }
+        return test;
     }
 
     public void addEventSource(UUID eventSource) {
