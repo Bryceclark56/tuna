@@ -6,7 +6,7 @@ import me.bc56.discord.util.Constants;
 
 @JsonAdapter(HeartbeatPayloadDataAdapter.class)
 public class HeartbeatPayloadData implements GatewayPayloadData {
-    public transient static final int opCode = Constants.GatewayPayloadType.HEARTBEAT;
+    public transient static final int opCode = Constants.GatewayOpcodes.HEARTBEAT;
 
     long nonce;
 

@@ -3,7 +3,7 @@ package me.bc56.discord.model.voicegateway.payload.data;
 import me.bc56.discord.util.Constants;
 
 public class VoiceSpeakingPayloadData implements VoiceGatewayPayloadData {
-    public transient static final int opCode = Constants.VoiceGatewayPayloadType.SPEAKING;
+    public transient static final int opCode = Constants.VoiceOpcodes.SPEAKING;
 
     Integer speaking;
 

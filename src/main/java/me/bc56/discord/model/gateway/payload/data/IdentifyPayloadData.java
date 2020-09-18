@@ -3,7 +3,7 @@ package me.bc56.discord.model.gateway.payload.data;
 import me.bc56.discord.util.Constants;
 
 public class IdentifyPayloadData implements GatewayPayloadData {
-    public transient static final int opCode = Constants.GatewayPayloadType.IDENTIFY;
+    public transient static final int opCode = Constants.GatewayOpcodes.IDENTIFY;
 
     private String token;
 

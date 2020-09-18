@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
 public class VoiceSessionDescriptionPayloadData implements VoiceGatewayPayloadData {
-    public transient static final int opCode = Constants.VoiceGatewayPayloadType.SESSION_DESCRIPTION;
+    public transient static final int opCode = Constants.VoiceOpcodes.SESSION_DESCRIPTION;
 
     String mode;
 

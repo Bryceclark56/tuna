@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
 public class VoiceIdentifyPayloadData implements VoiceGatewayPayloadData {
-    public transient static final int opCode = Constants.VoiceGatewayPayloadType.IDENTIFY;
+    public transient static final int opCode = Constants.VoiceOpcodes.IDENTIFY;
 
     @SerializedName("server_id")
     String serverId;

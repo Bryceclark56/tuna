@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import me.bc56.discord.util.Constants;
 
 public class HelloPayloadData implements GatewayPayloadData {
-    public transient static final int opCode = Constants.GatewayPayloadType.HELLO;
+    public transient static final int opCode = Constants.GatewayOpcodes.HELLO;
 
     @SerializedName("heartbeat_interval")
     private int heartbeatInterval;

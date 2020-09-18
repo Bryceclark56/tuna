@@ -3,7 +3,7 @@ package me.bc56.discord.model.voicegateway.payload.data;
 import me.bc56.discord.util.Constants;
 
 public class VoiceSelectProtocolPayloadData implements VoiceGatewayPayloadData {
-    public transient static final int opCode = Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL;
+    public transient static final int opCode = Constants.VoiceOpcodes.SELECT_PROTOCOL;
 
     String protocol;
 

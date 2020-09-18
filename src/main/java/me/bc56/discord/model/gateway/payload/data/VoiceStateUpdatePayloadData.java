@@ -1,11 +1,10 @@
 package me.bc56.discord.model.gateway.payload.data;
 
 import com.google.gson.annotations.SerializedName;
-import me.bc56.discord.model.GuildMember;
 import me.bc56.discord.util.Constants;
 
 public class VoiceStateUpdatePayloadData implements GatewayPayloadData {
-    public transient static final int opCode = Constants.GatewayPayloadType.VOICE_STATE_UPDATE;
+    public transient static final int opCode = Constants.GatewayOpcodes.VOICE_STATE_UPDATE;
 
     @SerializedName("guild_id")
     private String guildId;

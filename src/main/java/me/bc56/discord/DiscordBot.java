@@ -1,5 +1,8 @@
 package me.bc56.discord;
 
+import me.bc56.discord.api.Channels;
+import me.bc56.discord.api.Guilds;
+import me.bc56.discord.api.Users;
 import me.bc56.discord.audio.AudioProvider;
 import me.bc56.discord.model.ChannelMessage;
 import me.bc56.discord.model.DiscordUser;
@@ -53,7 +56,7 @@ public class DiscordBot {
     private Retrofit retrofit;
     private DiscordService discordService;
 
-    private String state;
+    private int state = Constants.BotState.STOPPED;
 
     private WebSocket webSocket;
     private WebSocket voiceWebSocket;
@@ -77,9 +80,12 @@ public class DiscordBot {
     private short voiceSequence;
     private Byte[] secretKey;
 
-    public DiscordBot(String authToken, String userAgent, Retrofit retrofit) {
-        this.state = "STOPPED";
+    //API Accessors
+    public Guilds guilds;
+    public Users users;
+    public Channels channels;
 
+    public DiscordBot(String authToken, String userAgent, Retrofit retrofit) {
         this.authToken = authToken;
         this.userAgent = userAgent;
         this.retrofit = retrofit;
@@ -96,23 +102,32 @@ public class DiscordBot {
         this.speaking = false;
 
         registerInternalEvents();
+
+        this.guilds = new Guilds(discordService);
+        this.users = new Users(discordService);
+        this.channels = new Channels(discordService);
     }
 
     public void start() {
+        state = Constants.BotState.STARTING;
+
         log.debug("Opening websocket...");
         webSocket = new OkHttpClient().newWebSocket(getGatewayRequest(), gateway);
 
-        this.state = "RUNNING";
+        this.state = Constants.BotState.RUNNING;
     }
 
     public void stop() {
         log.debug("Setting bot state to STOPPED");
-        state = "STOPPED";
+
+        state = Constants.BotState.STOPPING;
         webSocket.close(1000, "Stopping");
+
+        state = Constants.BotState.STOPPED;
     }
 
     public boolean isStopped() {
-        return state.equals("STOPPED");
+        return state == Constants.BotState.STOPPED;
     }
 
     private void registerInternalEvents() {
@@ -143,7 +158,7 @@ public class DiscordBot {
             voiceSelectProtocolPayloadData.setData(voiceSelectProtocolPayloadDataData);
 
             VoiceGatewayPayload voiceGatewayPayload = new VoiceGatewayPayload();
-            voiceGatewayPayload.setOpCode(Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL);
+            voiceGatewayPayload.setOpCode(Constants.VoiceOpcodes.SELECT_PROTOCOL);
             voiceGatewayPayload.setEventData(voiceSelectProtocolPayloadData);
 
             voiceGateway.send(voiceWebSocket, voiceGatewayPayload);
@@ -218,7 +233,7 @@ public class DiscordBot {
         voiceSpeakingPayloadData.setSpeaking(speaking);
 
         VoiceGatewayPayload payload = new VoiceGatewayPayload();
-        payload.setOpCode(Constants.VoiceGatewayPayloadType.SPEAKING);
+        payload.setOpCode(Constants.VoiceOpcodes.SPEAKING);
         payload.setEventData(voiceSpeakingPayloadData);
 
         voiceGateway.send(voiceWebSocket, payload);
@@ -246,7 +261,7 @@ public class DiscordBot {
         voiceStateUpdate.setSelfDeaf(false);
 
         GatewayPayload payload = new GatewayPayload();
-        payload.setOpCode(Constants.GatewayPayloadType.VOICE_STATE_UPDATE);
+        payload.setOpCode(Constants.GatewayOpcodes.VOICE_STATE_UPDATE);
         payload.setEventData(voiceStateUpdate);
 
         gateway.send(webSocket, payload);
@@ -273,7 +288,7 @@ public class DiscordBot {
         voiceStateUpdatePayloadData.setSelfMute(false);
 
         GatewayPayload payload = new GatewayPayload();
-        payload.setOpCode(Constants.GatewayPayloadType.VOICE_STATE_UPDATE);
+        payload.setOpCode(Constants.GatewayOpcodes.VOICE_STATE_UPDATE);
         payload.setEventData(voiceStateUpdatePayloadData);
 
         var voiceServerFuture = eventEmitters.register(VoiceServerUpdateEvent.class);
@@ -308,7 +323,7 @@ public class DiscordBot {
         identifyPayloadData.setToken(voiceServerEvent.getToken());
 
         VoiceGatewayPayload voiceGatewayPayload = new VoiceGatewayPayload();
-        voiceGatewayPayload.setOpCode(Constants.VoiceGatewayPayloadType.IDENTIFY);
+        voiceGatewayPayload.setOpCode(Constants.VoiceOpcodes.IDENTIFY);
         voiceGatewayPayload.setEventData(identifyPayloadData);
 
         log.debug("Sending identify to voice gateway");
@@ -529,7 +544,7 @@ public class DiscordBot {
                 .build();
     }
 
-    public String getState() {
+    public int getState() {
         return state;
     }
 

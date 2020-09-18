@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import me.bc56.discord.model.gateway.event.DispatchEvent;
 import me.bc56.discord.model.gateway.event.HeartbeakAckEvent;
 import me.bc56.discord.model.gateway.event.HelloEvent;
-import me.bc56.discord.model.gateway.event.VoiceStateUpdateEvent;
 import me.bc56.discord.model.gateway.payload.GatewayPayload;
 import me.bc56.discord.model.gateway.payload.data.*;
 import me.bc56.discord.util.Constants;
@@ -70,17 +69,17 @@ public class DiscordGatewayListener extends WebSocketListener {
 
             //log.debug("Received dispatch event with name: {}\nRAW Payload: {}\nEND_OF_PAYLOAD", payload.getEventName(), text);
             switch (payload.getOpCode()) {
-                case Constants.GatewayPayloadType.HELLO -> {
+                case Constants.GatewayOpcodes.HELLO -> {
                     log.debug("Type of Hello!");
                     heartbeatInterval = ((HelloPayloadData) data).getHeartbeatInterval();
                     startHeartbeat(webSocket, heartbeatInterval);
                     eventEmitter.emit(new HelloEvent());
                 }
-                case Constants.GatewayPayloadType.HEARTBEAT_ACK -> {
+                case Constants.GatewayOpcodes.HEARTBEAT_ACK -> {
                     log.debug("Received ACK!");
                     eventEmitter.emit(new HeartbeakAckEvent());
                 }
-                case Constants.GatewayPayloadType.DISPATCH -> {
+                case Constants.GatewayOpcodes.DISPATCH -> {
                     DispatchPayloadData dispatchData = (DispatchPayloadData) data;
                     eventEmitter.emit(new DispatchEvent(
                             payload.getEventName(), dispatchData.getEvent()

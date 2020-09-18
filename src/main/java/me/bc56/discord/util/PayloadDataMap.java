@@ -23,17 +23,17 @@ public class PayloadDataMap {
             map = new HashMap<>();
 
             // Register payload classes
-            map.put(Constants.GatewayPayloadType.DISPATCH, DispatchPayloadData.class);
-            map.put(Constants.GatewayPayloadType.HEARTBEAT, HeartbeatPayloadData.class);
-            map.put(Constants.GatewayPayloadType.IDENTIFY, IdentifyPayloadData.class);
+            map.put(Constants.GatewayOpcodes.DISPATCH, DispatchPayloadData.class);
+            map.put(Constants.GatewayOpcodes.HEARTBEAT, HeartbeatPayloadData.class);
+            map.put(Constants.GatewayOpcodes.IDENTIFY, IdentifyPayloadData.class);
             //map.put(Constants.GatewayPayloadType.PRESENCE_UPDATE, PresencePayloadData.class); Unused for now
-            map.put(Constants.GatewayPayloadType.VOICE_STATE_UPDATE, VoiceStateUpdatePayloadData.class);
+            map.put(Constants.GatewayOpcodes.VOICE_STATE_UPDATE, VoiceStateUpdatePayloadData.class);
             //map.put(Constants.GatewayPayloadType.RESUME, ResumePayloadData.class); Unused for now
             //map.put(Constants.GatewayPayloadType.RECONNECT, ReconnectPayloadData.class); Unused for now
             //map.put(Constants.GatewayPayloadType.REQUEST_GUILD_MEMBERS, RequestGuildMemberPayloadData.class); Unused for now
-            map.put(Constants.GatewayPayloadType.INVALID_SESSION, InvalidSessionPayloadData.class);
-            map.put(Constants.GatewayPayloadType.HELLO, HelloPayloadData.class);
-            map.put(Constants.GatewayPayloadType.HEARTBEAT_ACK, HeartbeatAckPayloadData.class);
+            map.put(Constants.GatewayOpcodes.INVALID_SESSION, InvalidSessionPayloadData.class);
+            map.put(Constants.GatewayOpcodes.HELLO, HelloPayloadData.class);
+            map.put(Constants.GatewayOpcodes.HEARTBEAT_ACK, HeartbeatAckPayloadData.class);
         }
 
         return map;
@@ -46,15 +46,15 @@ public class PayloadDataMap {
             voiceMap = new HashMap<>();
 
             // Register voice payload classes
-            voiceMap.put(Constants.VoiceGatewayPayloadType.IDENTIFY, VoiceIdentifyPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.SELECT_PROTOCOL, VoiceSelectProtocolPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.READY, VoiceReadyPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT, VoiceHeartbeatPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.SESSION_DESCRIPTION, VoiceSessionDescriptionPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.SPEAKING, VoiceSpeakingPayloadData.class);
-            voiceMap.put(Constants.VoiceGatewayPayloadType.HEARTBEAT_ACK, VoiceHeartbeatAckPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.IDENTIFY, VoiceIdentifyPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.SELECT_PROTOCOL, VoiceSelectProtocolPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.READY, VoiceReadyPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.HEARTBEAT, VoiceHeartbeatPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.SESSION_DESCRIPTION, VoiceSessionDescriptionPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.SPEAKING, VoiceSpeakingPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.HEARTBEAT_ACK, VoiceHeartbeatAckPayloadData.class);
             //voiceMap.put(Constants.VoiceGatewayPayloadType.RESUME, );
-            voiceMap.put(Constants.VoiceGatewayPayloadType.HELLO, VoiceHelloPayloadData.class);
+            voiceMap.put(Constants.VoiceOpcodes.HELLO, VoiceHelloPayloadData.class);
             //voiceMap.put(Constants.VoiceGatewayPayloadType.RESUMED, );
             //voiceMap.put(Constants.VoiceGatewayPayloadType.CLIENT_DISCONNECT, );
         }

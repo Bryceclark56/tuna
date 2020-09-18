@@ -6,7 +6,7 @@ import me.bc56.discord.model.voicegateway.event.VoiceHelloEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceReadyEvent;
 import me.bc56.discord.model.voicegateway.event.VoiceSessionDescriptionEvent;
 import me.bc56.discord.model.voicegateway.payload.VoiceGatewayPayload;
-import me.bc56.discord.util.Constants.VoiceGatewayPayloadType;
+import me.bc56.discord.util.Constants.VoiceOpcodes;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -42,29 +42,29 @@ public class VoiceGatewayListener extends WebSocketListener {
 
         //The server should only ever send us these events
         switch (opCode) {
-            case VoiceGatewayPayloadType.READY:
+            case VoiceOpcodes.READY:
                 VoiceReadyEvent readyEvent = new VoiceReadyEvent(payload);
                 eventsManager.emit(readyEvent);
                 break;
-            case VoiceGatewayPayloadType.SESSION_DESCRIPTION:
+            case VoiceOpcodes.SESSION_DESCRIPTION:
                 VoiceSessionDescriptionEvent sessDescEvent = new VoiceSessionDescriptionEvent(payload);
                 eventsManager.emit(sessDescEvent);
                 break;
-            case VoiceGatewayPayloadType.SPEAKING:
+            case VoiceOpcodes.SPEAKING:
                 //TODO: Handle this
                 break;
-            case VoiceGatewayPayloadType.HEARTBEAT_ACK:
+            case VoiceOpcodes.HEARTBEAT_ACK:
                 VoiceHeartbeatAckEvent ackEvent = new VoiceHeartbeatAckEvent(payload);
                 eventsManager.emit(ackEvent);
                 break;
-            case VoiceGatewayPayloadType.HELLO:
+            case VoiceOpcodes.HELLO:
                 VoiceHelloEvent helloEvent = new VoiceHelloEvent(payload);
                 eventsManager.emit(helloEvent);
                 break;
-            case VoiceGatewayPayloadType.RESUMED:
+            case VoiceOpcodes.RESUMED:
                 //TODO: Handle this
                 break;
-            case VoiceGatewayPayloadType.CLIENT_DISCONNECT: {
+            case VoiceOpcodes.CLIENT_DISCONNECT: {
                 //Ignore this event for now
                 System.exit(6);
             }
