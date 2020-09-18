@@ -1,7 +1,11 @@
 package me.bc56.discord.util;
 
+import java.time.Instant;
+
 public class Constants {
     public static final String DISCORD_BASE_URL = "https://discord.com/api/";
+
+    public static final Instant DISCORD_EPOCH = Instant.ofEpochMilli(Long.parseLong("1420070400000"));
 
     public static class GatewayPayloadType {
         public static final int DISPATCH              =  0;
