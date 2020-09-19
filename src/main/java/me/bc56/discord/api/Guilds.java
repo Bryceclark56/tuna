@@ -38,13 +38,7 @@ public class Guilds extends DiscordApiAccessor {
             }
 
             // Bad response if reached
-            assert response.errorBody() != null;
-            JsonObject jsonError = (new Gson()).fromJson(response.errorBody().string(), JsonObject.class);
-
-            int jsonCode = jsonError.get("code").getAsInt();
-            String jsonMessage = jsonError.get("message").getAsString();
-
-            throw new DiscordApiException(response.code(), jsonCode, jsonMessage);
+            throw ApiHelper.getException(response);
         } catch (IOException e) {
             log.error("Exception while sending HTTP request to discord/getGuild", e);
             //TODO: Proper handling of this situation
