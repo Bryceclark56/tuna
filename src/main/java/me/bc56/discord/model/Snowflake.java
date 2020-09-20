@@ -1,11 +1,14 @@
 package me.bc56.discord.model;
 
+import com.google.gson.annotations.JsonAdapter;
+import me.bc56.discord.adapter.SnowflakeAdapter;
 import me.bc56.discord.util.Constants;
 
 import java.math.BigInteger;
 import java.time.Instant;
 
 // https://discord.com/developers/docs/reference#snowflakes
+@JsonAdapter(SnowflakeAdapter.class)
 public class Snowflake {
     public final Long id;
 
@@ -54,5 +57,10 @@ public class Snowflake {
 
     public boolean equals(Snowflake other) {
         return id.equals(other.id);
+    }
+
+    @Override
+    public String toString() {
+        return id.toString();
     }
 }

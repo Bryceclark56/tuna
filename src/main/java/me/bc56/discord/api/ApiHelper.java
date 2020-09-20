@@ -35,6 +35,7 @@ public class ApiHelper {
         return new DiscordApiException(requestResponse.code(), jsonCode, jsonMessage);
     }
 
+    //Makes a request and returns the JSON response if successful, or throws an exception if not.
     public static <E> E makeRequest(@NonNull Call<E> request) throws DiscordApiException {
         try {
             Response<E> response = request.execute();

@@ -17,6 +17,7 @@ public class HeartbeatPayloadDataAdapter extends TypeAdapter<HeartbeatPayloadDat
 
     @Override
     public HeartbeatPayloadData read(JsonReader in) throws IOException {
+        //TODO
         return null;
     }
 }

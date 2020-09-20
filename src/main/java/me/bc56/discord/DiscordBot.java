@@ -48,6 +48,11 @@ import java.util.function.Consumer;
 public class DiscordBot {
     static Logger log = LoggerFactory.getLogger(DiscordBot.class);
 
+    //API Accessors
+    public Guilds guilds;
+    public Users users;
+    public Channels channels;
+
     private String authToken;
     private String userAgent;
 
@@ -79,11 +84,6 @@ public class DiscordBot {
 
     private short voiceSequence;
     private Byte[] secretKey;
-
-    //API Accessors
-    public Guilds guilds;
-    public Users users;
-    public Channels channels;
 
     public DiscordBot(String authToken, String userAgent, Retrofit retrofit) {
         this.authToken = authToken;
@@ -413,24 +413,6 @@ public class DiscordBot {
             rateHit = System.currentTimeMillis();
             log.error("Limit reached for sending messages");
         }
-    }
-
-    public Guild getGuild(String guildId) {
-        log.debug("Getting guild {}", guildId);
-
-        Call<Guild> guildRequest = discordService.getGuild(guildId, null);
-
-        try {
-            Response<Guild> guildResponse = guildRequest.execute();
-
-            if (guildResponse.isSuccessful()) {
-                return guildResponse.body();
-            }
-        } catch (IOException e) {
-            log.warn("Unable to get guild {}", guildId);
-        }
-
-        return null;
     }
 
     public void sendIdentify() {

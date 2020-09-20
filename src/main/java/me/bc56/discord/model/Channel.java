@@ -1,13 +1,14 @@
 package me.bc56.discord.model;
 
 import com.google.gson.annotations.SerializedName;
+import me.bc56.discord.util.Constants.ChannelType;
 
 import java.sql.Timestamp;
 
 public class Channel {
-    String id; //Snowflake
+    Snowflake id; //Snowflake
 
-    int type;
+    ChannelType type;
 
     @SerializedName("guild_id")
     String guildId;

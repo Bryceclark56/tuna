@@ -86,7 +86,7 @@ public class Guild {
 
     GuildMember[] members;
 
-    //channels
+    Channel[] channels;
 
     //presences
 
