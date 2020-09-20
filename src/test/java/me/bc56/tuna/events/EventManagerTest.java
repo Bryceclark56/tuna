@@ -10,8 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static org.mockito.Mockito.*;
 
@@ -32,7 +31,7 @@ class EventManagerTest {
     }
 
     @Test
-    void testValidEventConsumption() {
+    void validEventConsumption() throws InterruptedException, ExecutionException, TimeoutException {
         UUID fakeProducerId = UUID.randomUUID();
         String fakeEventType = "Hi, Dad."; //TODO: Should I randomly generate the type string?
         Event testEvent = new Event(fakeProducerId, fakeEventType);
@@ -44,13 +43,14 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        threadManager.execute(() -> eventManager.submitEvent(testEvent));
+        var future = threadManager.execute(() -> eventManager.submitEvent(testEvent));
 
-        verify(mockEventReceiver, timeout(100)).enqueue(testEvent);
+        future.get(10, TimeUnit.SECONDS);
+        verify(mockEventReceiver, times(1)).enqueue(testEvent);
     }
 
     @Test
-    void testInvalidEventConsumption() {
+    void invalidEventConsumption() throws InterruptedException, ExecutionException, TimeoutException {
         UUID fakeProducerId = UUID.randomUUID();
         String fakeEventType = "Hi, Dad."; //TODO: Should I randomly generate the type string?
         String otherFakeEventType = "Hi, Mom.";
@@ -63,9 +63,10 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        threadManager.execute(() -> eventManager.submitEvent(testEvent));
+        var future = threadManager.execute(() -> eventManager.submitEvent(testEvent));
 
-        verify(mockEventReceiver, timeout(100).times(0)).enqueue(testEvent);
+        future.get(10, TimeUnit.SECONDS);
+        verify(mockEventReceiver, times(0)).enqueue(testEvent);
     }
 
     @AfterAll
