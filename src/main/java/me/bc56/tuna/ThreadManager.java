@@ -8,7 +8,7 @@ public class ThreadManager {
     private final Map<TunaModule, ExecutorService> dedicatedExecutors;
 
     public ThreadManager() {
-        genericExecutor = Executors.newFixedThreadPool(10);
+        genericExecutor = Executors.newCachedThreadPool();
         dedicatedExecutors = new ConcurrentHashMap<>(4);
     }
 
@@ -44,8 +44,8 @@ public class ThreadManager {
     }
 
     //Generic task execution on general thread pool
-    public void execute(Runnable task) {
-        genericExecutor.execute(task);
+    public Future<?> execute(Runnable task) {
+        return genericExecutor.submit(task);
     }
 
     public void unregisterCoreModule(TunaModule module) {
