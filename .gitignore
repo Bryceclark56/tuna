@@ -8,6 +8,8 @@
 # Build Files
 build/
 /build/
+/out/
 
 # Random gradle stuff we shouldn't push
 .gradle/
+

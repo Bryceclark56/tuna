@@ -2,10 +2,9 @@ package me.bc56.tuna.events;
 
 import me.bc56.tuna.ThreadManager;
 import me.bc56.tuna.events.type.Event;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,21 +16,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class EventManagerTest {
 
-    static ThreadManager threadManager;
-
-    static EventManager eventManager;
+    EventManager eventManager = new EventManager();
     @Mock EventReceiver mockEventReceiver;
 
-    @BeforeAll
-    static void setup() {
-        threadManager = new ThreadManager();
-
-        eventManager = EventManager.getInstance();
-        threadManager.runCoreModule(eventManager);
-    }
-
     @Test
-    void validEventConsumption() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldEnqueueEvent() {
         UUID fakeProducerId = UUID.randomUUID();
         String fakeEventType = "Hi, Dad."; //TODO: Should I randomly generate the type string?
         Event testEvent = new Event(fakeProducerId, fakeEventType);
@@ -43,14 +32,14 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        var future = threadManager.execute(() -> eventManager.submitEvent(testEvent));
+        new Thread(() -> eventManager.submitEvent(testEvent)).start();
+        eventManager.loop();
 
-        future.get(10, TimeUnit.SECONDS);
         verify(mockEventReceiver, times(1)).enqueue(testEvent);
     }
 
     @Test
-    void invalidEventConsumption() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldNotEnqueueEvent() {
         UUID fakeProducerId = UUID.randomUUID();
         String fakeEventType = "Hi, Dad."; //TODO: Should I randomly generate the type string?
         String otherFakeEventType = "Hi, Mom.";
@@ -63,14 +52,9 @@ class EventManagerTest {
 
         eventManager.registerReceiver(mockEventReceiver, eventFilter);
 
-        var future = threadManager.execute(() -> eventManager.submitEvent(testEvent));
+        new Thread(() -> eventManager.submitEvent(testEvent)).start();
+        eventManager.loop();
 
-        future.get(10, TimeUnit.SECONDS);
         verify(mockEventReceiver, times(0)).enqueue(testEvent);
-    }
-
-    @AfterAll
-    static void teardown() {
-        threadManager.stopCoreModule(eventManager);
     }
 }

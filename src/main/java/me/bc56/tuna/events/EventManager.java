@@ -38,7 +38,7 @@ public class EventManager extends TunaModule {
             return;
         }
 
-        log.debug("New event {}! Checking against filters!", event.type);
+        log.debug("New event {}!", event.type);
         eventReceivers.forEach((receiver, filter) -> {
             if (filter.checkEvent(event)) {
                 receiver.enqueue(event);
