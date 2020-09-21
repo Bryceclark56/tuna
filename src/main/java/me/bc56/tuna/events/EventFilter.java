@@ -2,14 +2,14 @@ package me.bc56.tuna.events;
 
 import me.bc56.tuna.events.type.Event;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class EventFilter {
     //TODO: N-time filters (Only match the next N events then remove from filter)
-    private final List<UUID> eventSources = new LinkedList<>();
-    private final List<String> eventTypes = new LinkedList<>();
+    private final Set<UUID> eventSources = new HashSet<>();
+    private final Set<String> eventTypes = new HashSet<>();
 
     /**
      * @param event event to check against filters
@@ -25,10 +25,11 @@ public class EventFilter {
             test = eventSources.contains(event.source);
         }
 
-        if (!eventTypes.isEmpty()) {
-            test &= eventTypes.contains(event.type);
+        if (test && !eventTypes.isEmpty()) {
+            return eventTypes.contains(event.type);
         }
-        return test;
+
+        return false;
     }
 
     public void addEventSource(UUID eventSource) {
