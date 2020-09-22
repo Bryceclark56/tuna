@@ -16,4 +16,10 @@ public class DiscordApiException extends Exception {
         code = jsonErrorCode;
         message = jsonErrorMessage;
     }
+
+    public boolean equals(DiscordApiException other) {
+            return httpError == other.httpError
+                && code == other.code
+                && message.equals(other.message);
+    }
 }

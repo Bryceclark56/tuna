@@ -11,7 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 public class EventManager extends TunaModule {
-    private static Logger log = LoggerFactory.getLogger(EventManager.class);
+    private static final Logger log = LoggerFactory.getLogger(EventManager.class);
     private static EventManager instance;
 
     private final SynchronousQueue<Event> queuedEvents = new SynchronousQueue<>();

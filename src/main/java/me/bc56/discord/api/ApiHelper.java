@@ -14,20 +14,22 @@ import java.io.UncheckedIOException;
 import java.util.Objects;
 
 public class ApiHelper {
-    private static Logger log = LoggerFactory.getLogger(ApiHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(ApiHelper.class);
 
     //Creates and returns a DiscordAPIException for a failed request to the Discord API
     public static DiscordApiException getException(@NonNull Response<?> requestResponse) {
         Objects.requireNonNull(requestResponse.errorBody(),
                 "Request has a null error body. Are you sure this is an unsuccessful request?");
-
-        JsonObject jsonError;
+        String errorBody; //Can only be consumed once; must be saved.
         try {
-            jsonError = (new Gson()).fromJson(requestResponse.errorBody().string(), JsonObject.class);
+            errorBody = requestResponse.errorBody().string();
         } catch (IOException e) {
             log.error("Problem parsing JSON body of HTTP response", e);
             throw new UncheckedIOException(e);
         }
+
+
+        JsonObject jsonError = (new Gson()).fromJson(errorBody, JsonObject.class);
 
         int jsonCode = jsonError.get("code").getAsInt();
         String jsonMessage = jsonError.get("message").getAsString();
