@@ -1,4 +1,4 @@
 package me.bc56.discord.gateway.dispatch;
 
-public class GuildIntegrationsUpdate {
+public class GuildIntegrationsUpdate extends DispatchData {
 }

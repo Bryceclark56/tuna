@@ -1,4 +1,4 @@
 package me.bc56.discord.gateway.dispatch;
 
-public class Reconnect {
+public class Reconnect extends DispatchData {
 }

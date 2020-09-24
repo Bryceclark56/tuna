@@ -1,4 +1,4 @@
 package me.bc56.discord.gateway.dispatch;
 
-public class ChannelPinsUpdate {
+public class ChannelPinsUpdate extends DispatchData {
 }

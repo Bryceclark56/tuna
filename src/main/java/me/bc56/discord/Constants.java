@@ -75,6 +75,7 @@ public class Constants {
         GUILD_UPDATE,
         GUILD_DELETE,
         GUILD_BAN_ADD,
+        GUILD_BAN_REMOVE,
         GUILD_EMOJIS_UPDATE,
         GUILD_INTEGRATIONS_UPDATE,
         GUILD_MEMBER_ADD,
