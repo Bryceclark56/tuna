@@ -10,6 +10,6 @@ public class DiscordThreadManager {
     static ExecutorService executor = Executors.newWorkStealingPool();
 
     public static void quickRun(Async a) {
-
+        executor.execute(a::loop);
     }
 }
