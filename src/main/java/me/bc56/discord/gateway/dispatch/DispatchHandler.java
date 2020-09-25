@@ -15,7 +15,7 @@ public class DispatchHandler {
     public static Logger log = LoggerFactory.getLogger(DispatchHandler.class);
 
     @SuppressWarnings("unchecked") //We guarantee the superclass is DispatchData in constructMap()
-    Map<Class<? extends DispatchData>, Method> classToMethodMap = (Map<Class<? extends DispatchData>, Method>) constructMap();
+    static Map<Class<? extends DispatchData>, Method> classToMethodMap = (Map<Class<? extends DispatchData>, Method>) constructMap();
 
     public DispatchHandler() {
     }
@@ -28,8 +28,8 @@ public class DispatchHandler {
         }
     }
 
-    Map<Class<?>, Method> constructMap() {
-        var methods = this.getClass().getDeclaredMethods();
+    static Map<Class<?>, Method> constructMap() {
+        var methods = DispatchHandler.class.getDeclaredMethods();
 
         //We only want methods of the pattern: handle(Class var)
         return Arrays.stream(methods)
