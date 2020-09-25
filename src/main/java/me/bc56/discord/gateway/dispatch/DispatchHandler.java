@@ -22,7 +22,7 @@ public class DispatchHandler {
 
     public <T extends DispatchData> void handleDispatch(T dispatchData) {
         try {
-            classToMethodMap.get(dispatchData).invoke(this, dispatchData);
+            classToMethodMap.get(dispatchData.getClass()).invoke(this, dispatchData);
         } catch (IllegalAccessException | InvocationTargetException e) {
             log.error("Problem while handling dispatch", e);
         }
@@ -31,6 +31,7 @@ public class DispatchHandler {
     Map<Class<?>, Method> constructMap() {
         var methods = this.getClass().getDeclaredMethods();
 
+        //We only want methods of the pattern: handle(Class var)
         return Arrays.stream(methods)
                 .filter(method -> method.getName().equals("handle")
                         && method.getParameterCount() == 1
