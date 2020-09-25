@@ -1,9 +1,13 @@
 package me.bc56.discord;
 
 import com.google.gson.annotations.SerializedName;
+import me.bc56.discord.gateway.dispatch.type.*;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static me.bc56.discord.Constants.GatewayDispatch.*;
+import static me.bc56.discord.Constants.GatewayDispatch.WEBHOOKS_UPDATE;
 
 public class Constants {
     public enum GatewayOpcode {
@@ -100,6 +104,44 @@ public class Constants {
         USER_UPDATE,
         VOICE_STATE_UPDATE,
         VOICE_SERVER_UPDATE,
-        WEBHOOKS_UPDATE;
+        WEBHOOKS_UPDATE
     }
+
+    //Some may not be dispatches, but full gateway payload events (Discord docs on it aren't clear on this)
+    private static Map<GatewayDispatch, Class<? extends DispatchData>> dispatchMap = Map.ofEntries(
+            Map.entry(READY, Ready.class),
+            Map.entry(RESUMED, Resumed.class),
+            Map.entry(CHANNEL_CREATE, ChannelCreate.class),
+            Map.entry(CHANNEL_UPDATE, ChannelUpdate.class),
+            Map.entry(CHANNEL_DELETE, ChannelDelete.class),
+            Map.entry(CHANNEL_PINS_UPDATE, ChannelPinsUpdate.class),
+            Map.entry(GUILD_CREATE, GuildCreate.class),
+            Map.entry(GUILD_UPDATE, GuildUpdate.class),
+            Map.entry(GUILD_DELETE, GuildDelete.class),
+            Map.entry(GUILD_BAN_ADD, GuildBanAdd.class),
+            Map.entry(GUILD_BAN_REMOVE, GuildBanRemove.class),
+            Map.entry(GUILD_EMOJIS_UPDATE, GuildEmojisUpdate.class),
+            Map.entry(GUILD_INTEGRATIONS_UPDATE, GuildIntegrationsUpdate.class),
+            Map.entry(GUILD_MEMBER_ADD, GuildMemberAdd.class),
+            Map.entry(GUILD_MEMBER_REMOVE, GuildMemberRemove.class),
+            Map.entry(GUILD_MEMBER_UPDATE, GuildMemberUpdate.class),
+            Map.entry(GUILD_MEMBERS_CHUNK, GuildMembersChunk.class),
+            Map.entry(GUILD_ROLE_CREATE, GuildRoleCreate.class),
+            Map.entry(GUILD_ROLE_UPDATE, GuildRoleUpdate.class),
+            Map.entry(GUILD_ROLE_DELETE, GuildRoleDelete.class),
+            Map.entry(INVITE_CREATE, InviteCreate.class),
+            Map.entry(INVITE_DELETE, InviteDelete.class),
+            Map.entry(MESSAGE_CREATE, MessageCreate.class),
+            Map.entry(MESSAGE_UPDATE, MessageUpdate.class),
+            Map.entry(MESSAGE_DELETE, MessageDelete.class),
+            Map.entry(MESSAGE_DELETE_BULK, MessageDeleteBulk.class),
+            Map.entry(MESSAGE_REACTION_ADD, MessageReactionAdd.class),
+            Map.entry(MESSAGE_REACTION_REMOVE, MessageReactionRemove.class),
+            Map.entry(MESSAGE_REACTION_REMOVE_ALL, MessageReactionRemoveAll.class),
+            Map.entry(MESSAGE_REACTION_REMOVE_EMOJI, MessageReactionRemoveEmoji.class),
+            Map.entry(TYPING_START, TypingStart.class),
+            Map.entry(USER_UPDATE, UserUpdate.class),
+            Map.entry(VOICE_SERVER_UPDATE, VoiceServerUpdate.class),
+            Map.entry(WEBHOOKS_UPDATE, WebhooksUpdate.class)
+    );
 }

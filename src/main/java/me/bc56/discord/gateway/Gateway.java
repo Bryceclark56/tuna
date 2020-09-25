@@ -2,13 +2,15 @@ package me.bc56.discord.gateway;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import me.bc56.discord.Constants.GatewayDispatch;
 import me.bc56.discord.Constants.GatewayOpcode;
+import me.bc56.discord.events.type.DispatchEvent;
 import me.bc56.discord.events.type.GatewayPayloadEvent;
-import me.bc56.discord.gateway.dispatch.*;
+import me.bc56.discord.gateway.dispatch.DispatchHandler;
+import me.bc56.discord.gateway.dispatch.type.DispatchData;
 import me.bc56.discord.gateway.payload.GatewayPayload;
 import me.bc56.discord.gateway.payload.type.*;
 import me.bc56.discord.thread.DiscordThreadManager;
+import me.bc56.generic.event.EventDispatcher;
 import me.bc56.generic.thread.Async;
 import me.bc56.generic.event.Event;
 import me.bc56.generic.event.EventSink;
@@ -19,73 +21,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static me.bc56.discord.Constants.GatewayDispatch.*;
+import java.util.function.Function;
 
 public class Gateway implements EventSink, Async {
     private static Logger log = LoggerFactory.getLogger(Gateway.class);
 
-    //Some may not be dispatches, but full gateway payload events (Discord docs on it aren't clear on this)
-    private static Map<GatewayDispatch, Class<? extends DispatchData>> dispatchMap = Map.ofEntries(
-            Map.entry(READY, Ready.class),
-            Map.entry(RESUMED, Resumed.class),
-            Map.entry(CHANNEL_CREATE, ChannelCreate.class),
-            Map.entry(CHANNEL_UPDATE, ChannelUpdate.class),
-            Map.entry(CHANNEL_DELETE, ChannelDelete.class),
-            Map.entry(CHANNEL_PINS_UPDATE, ChannelPinsUpdate.class),
-            Map.entry(GUILD_CREATE, GuildCreate.class),
-            Map.entry(GUILD_UPDATE, GuildUpdate.class),
-            Map.entry(GUILD_DELETE, GuildDelete.class),
-            Map.entry(GUILD_BAN_ADD, GuildBanAdd.class),
-            Map.entry(GUILD_BAN_REMOVE, GuildBanRemove.class),
-            Map.entry(GUILD_EMOJIS_UPDATE, GuildEmojisUpdate.class),
-            Map.entry(GUILD_INTEGRATIONS_UPDATE, GuildIntegrationsUpdate.class),
-            Map.entry(GUILD_MEMBER_ADD, GuildMemberAdd.class),
-            Map.entry(GUILD_MEMBER_REMOVE, GuildMemberRemove.class),
-            Map.entry(GUILD_MEMBER_UPDATE, GuildMemberUpdate.class),
-            Map.entry(GUILD_MEMBERS_CHUNK, GuildMembersChunk.class),
-            Map.entry(GUILD_ROLE_CREATE, GuildRoleCreate.class),
-            Map.entry(GUILD_ROLE_UPDATE, GuildRoleUpdate.class),
-            Map.entry(GUILD_ROLE_DELETE, GuildRoleDelete.class),
-            Map.entry(INVITE_CREATE, InviteCreate.class),
-            Map.entry(INVITE_DELETE, InviteDelete.class),
-            Map.entry(MESSAGE_CREATE, MessageCreate.class),
-            Map.entry(MESSAGE_UPDATE, MessageUpdate.class),
-            Map.entry(MESSAGE_DELETE, MessageDelete.class),
-            Map.entry(MESSAGE_DELETE_BULK, MessageDeleteBulk.class),
-            Map.entry(MESSAGE_REACTION_ADD, MessageReactionAdd.class),
-            Map.entry(MESSAGE_REACTION_REMOVE, MessageReactionRemove.class),
-            Map.entry(MESSAGE_REACTION_REMOVE_ALL, MessageReactionRemoveAll.class),
-            Map.entry(MESSAGE_REACTION_REMOVE_EMOJI, MessageReactionRemoveEmoji.class),
-            Map.entry(TYPING_START, TypingStart.class),
-            Map.entry(USER_UPDATE, UserUpdate.class),
-            Map.entry(VOICE_SERVER_UPDATE, VoiceServerUpdate.class),
-            Map.entry(WEBHOOKS_UPDATE, WebhooksUpdate.class)
-    );
+    final static Type gatewayPayloadType = new TypeToken<GatewayPayloadEvent<?>>(){}.getType();
 
-    BlockingQueue<Event> events = new LinkedBlockingQueue<>();
+    final BlockingQueue<Event> events = new LinkedBlockingQueue<>();
 
-    Gson gson;
+    final Gson gson;
 
     WebSocket gatewayWebsocket;
+    final EventDispatcher eventDispatcher;
+    final DispatchHandler dispatchHandler = new DispatchHandler();
 
-    ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
-    AtomicBoolean hasReceivedAck = new AtomicBoolean(true); //Have we received a response to our last heartbeat?
+    final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
+    final AtomicBoolean hasReceivedAck = new AtomicBoolean(true); //Have we received a response to our last heartbeat?
 
     //TODO: Should this be a volatile Long instead?
     AtomicLong lastSequence;
 
-    public Gateway() {
+    public Gateway(EventDispatcher dispatcher) {
         gson = new Gson()
                 .newBuilder()
                 .registerTypeAdapter(
                         Heartbeat.class, HeartbeatAdapter.class)
                 .create();
+
+        eventDispatcher = dispatcher;
     }
 
     @Override
@@ -101,7 +68,10 @@ public class Gateway implements EventSink, Async {
 
         // We assume this EventSink only received GatewayPayloadEvents
         // Might have to change this later
-        processEvent((GatewayPayloadEvent<? extends GatewayPayloadType>) event);
+
+        if (event instanceof GatewayPayloadEvent<?> payloadEvent) {
+            processPayload(payloadEvent.payload);
+        }
     }
 
     public void connect() {
@@ -112,17 +82,14 @@ public class Gateway implements EventSink, Async {
         gatewayWebsocket = client.newWebSocket(null, listener);
     }
 
-    void processEvent(GatewayPayloadEvent<? extends GatewayPayloadType> event) {
-        processPayload(event.payload);
-    }
-
     //Wildcards and generics suck
     <E extends GatewayPayloadType> void processPayload(GatewayPayload<E> payload) {
         lastSequence.set(payload.sequence);
 
         switch (payload.opCode) {
             case DISPATCH -> {
-                //TODO:
+                Dispatch<? extends DispatchData> data = (Dispatch<? extends DispatchData>) payload.data;
+                handleDispatch(data);
             }
             case HEARTBEAT -> {
                 Heartbeat data = (Heartbeat) payload.data;
@@ -141,6 +108,13 @@ public class Gateway implements EventSink, Async {
             }
             case HEARTBEAT_ACK -> hasReceivedAck.set(true);
         }
+    }
+
+    private <D extends DispatchData> void handleDispatch(Dispatch<D> payload) {
+        DispatchEvent<D> event = new DispatchEvent<>(payload.data);
+
+        eventDispatcher.dispatch(event);
+        dispatchHandler.handleDispatch(payload.data);
     }
 
     private void setupHeartbeat(long interval) {
