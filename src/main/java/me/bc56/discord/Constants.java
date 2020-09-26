@@ -108,9 +108,10 @@ public class Constants {
     }
 
     //Some may not be dispatches, but full gateway payload events (Discord docs on it aren't clear on this)
-    private static Map<GatewayDispatch, Class<? extends DispatchData>> dispatchMap = Map.ofEntries(
+    private static final Map<GatewayDispatch, Class<? extends DispatchData>> dispatchMap = Map.ofEntries(
             Map.entry(READY, Ready.class),
             Map.entry(RESUMED, Resumed.class),
+            Map.entry(RECONNECT, Reconnect.class),
             Map.entry(CHANNEL_CREATE, ChannelCreate.class),
             Map.entry(CHANNEL_UPDATE, ChannelUpdate.class),
             Map.entry(CHANNEL_DELETE, ChannelDelete.class),
@@ -139,8 +140,10 @@ public class Constants {
             Map.entry(MESSAGE_REACTION_REMOVE, MessageReactionRemove.class),
             Map.entry(MESSAGE_REACTION_REMOVE_ALL, MessageReactionRemoveAll.class),
             Map.entry(MESSAGE_REACTION_REMOVE_EMOJI, MessageReactionRemoveEmoji.class),
+            Map.entry(PRESENCE_UPDATE, PresenceUpdate.class),
             Map.entry(TYPING_START, TypingStart.class),
             Map.entry(USER_UPDATE, UserUpdate.class),
+            Map.entry(VOICE_STATE_UPDATE, VoiceStateUpdate.class),
             Map.entry(VOICE_SERVER_UPDATE, VoiceServerUpdate.class),
             Map.entry(WEBHOOKS_UPDATE, WebhooksUpdate.class)
     );
