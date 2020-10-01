@@ -22,6 +22,7 @@ public enum GatewayIntent {
     DIRECT_MESSAGE_TYPING(1 << 14);
 
     public static final int MAX_BIT_LENGTH = 14;
+    public static final int MAX_INTENT_VALUE = (1 << (MAX_BIT_LENGTH + 1) ) - 1;
 
     int intentValue;
 
@@ -40,14 +41,23 @@ public enum GatewayIntent {
             return intentSet;
         }
 
-        for (int i = 0; i < MAX_BIT_LENGTH; ++i) {
-            intentSet.add(fromValue(intents << i));
+        if (intents > MAX_INTENT_VALUE || intents < 0) {
+            throw new IllegalArgumentException("Intent value outside accepted range");
+        }
+
+        //Check each bit in the input
+        for (int i = 0; i <= MAX_BIT_LENGTH; ++i) {
+            int value = (intents) & (1 << i);
+
+            if (value != 0) {
+                intentSet.add(fromValue(value));
+            }
         }
 
         return intentSet;
     }
 
     public static GatewayIntent fromValue(int intentVal) {
-        return Arrays.stream(values()).parallel().filter(intent -> intent.intentValue == intentVal).findFirst().orElseThrow();
+        return Arrays.stream(values()).filter(intent -> intent.intentValue == intentVal).findFirst().orElseThrow();
     }
 }
