@@ -3,7 +3,11 @@
 
 name: Java CI with Gradle
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore: [ discord-rebuild ]
+  pull_request:
+    branches: [ discord-rebuild ]
 
 jobs:
   build:
