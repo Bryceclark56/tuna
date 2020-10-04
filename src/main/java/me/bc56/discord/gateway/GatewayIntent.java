@@ -40,7 +40,7 @@ public enum GatewayIntent {
     }
 
     public static int serializeSet(EnumSet<GatewayIntent> intents) {
-        return intents.parallelStream().mapToInt(intent -> intent.intentValue).sum();
+        return intents.stream().mapToInt(intent -> intent.intentValue).sum();
     }
 
     public static EnumSet<GatewayIntent> deserializeSet(int intents) {
