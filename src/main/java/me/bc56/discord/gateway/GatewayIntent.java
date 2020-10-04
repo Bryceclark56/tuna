@@ -46,8 +46,8 @@ public enum GatewayIntent {
         }
 
         //Check each bit in the input
-        for (int i = 0; i <= MAX_BIT_LENGTH; ++i) {
-            int value = (intents) & (1 << i);
+        for (int i = 1, value; i <= MAX_INTENT_VALUE; i <<= 1) {
+            value = intents & i;
 
             if (value != 0) {
                 intentSet.add(fromValue(value));
