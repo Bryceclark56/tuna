@@ -2,6 +2,9 @@ package me.bc56.discord.gateway;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 // https://discord.com/developers/docs/topics/gateway#gateway-intents
 public enum GatewayIntent {
@@ -23,6 +26,12 @@ public enum GatewayIntent {
 
     public static final int MAX_BIT_LENGTH = 14;
     public static final int MAX_INTENT_VALUE = (1 << (MAX_BIT_LENGTH + 1) ) - 1;
+
+    public static Map<Integer, GatewayIntent> intentMap = Arrays.stream(values())
+            .collect(Collectors.toUnmodifiableMap(
+                    intent -> intent.intentValue,
+                    Function.identity()
+            ));
 
     int intentValue;
 
@@ -58,6 +67,6 @@ public enum GatewayIntent {
     }
 
     public static GatewayIntent fromValue(int intentVal) {
-        return Arrays.stream(values()).filter(intent -> intent.intentValue == intentVal).findFirst().orElseThrow();
+        return intentMap.get(intentVal);
     }
 }
