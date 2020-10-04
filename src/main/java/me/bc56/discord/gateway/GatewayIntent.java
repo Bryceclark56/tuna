@@ -24,7 +24,7 @@ public enum GatewayIntent {
     DIRECT_MESSAGE_REACTIONS(1 << 13),
     DIRECT_MESSAGE_TYPING(1 << 14);
 
-    public static final int MAX_BIT_LENGTH = 14;
+    public static final int MAX_BIT_LENGTH = values().length;
     public static final int MAX_INTENT_VALUE = (1 << (MAX_BIT_LENGTH + 1) ) - 1;
 
     public static Map<Integer, GatewayIntent> intentMap = Arrays.stream(values())
