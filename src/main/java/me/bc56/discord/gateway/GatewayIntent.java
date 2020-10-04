@@ -25,7 +25,7 @@ public enum GatewayIntent {
     DIRECT_MESSAGE_TYPING(1 << 14);
 
     public static final int MAX_BIT_LENGTH = values().length;
-    public static final int MAX_INTENT_VALUE = (1 << (MAX_BIT_LENGTH + 1) ) - 1;
+    public static final int MAX_INTENT_VALUE = (1 << MAX_BIT_LENGTH) - 1;
 
     public static Map<Integer, GatewayIntent> intentMap = Arrays.stream(values())
             .collect(Collectors.toUnmodifiableMap(
@@ -50,7 +50,7 @@ public enum GatewayIntent {
             return intentSet;
         }
 
-        if (intents > MAX_INTENT_VALUE || intents < 0) {
+        if (intents > MAX_INTENT_VALUE || intents < 1) {
             throw new IllegalArgumentException("Intent value outside accepted range");
         }
 

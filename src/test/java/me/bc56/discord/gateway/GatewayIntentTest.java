@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.EnumSet;
 
 import static me.bc56.discord.gateway.GatewayIntent.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GatewayIntentTest {
 
@@ -64,5 +63,22 @@ class GatewayIntentTest {
         var actual = GatewayIntent.fromValue(testIntent);
 
         assertEquals(GUILD_WEBHOOKS, actual);
+    }
+
+    /*
+     * Added to ensure that the MAX_BIT_LENGTH variable is correctly initialized;
+     */
+    @Test
+    void validate_MAX_BIT_LENGTH() {
+        int testValue = intentMap.keySet().stream().mapToInt(intent -> intent).sum();
+
+        assertEquals(MAX_INTENT_VALUE, testValue);
+
+        var intentSet = deserializeSet(testValue);
+        var intentArray = intentSet.toArray();
+
+        for (int i = 0; i < MAX_BIT_LENGTH; ++i) {
+            assertEquals(values()[i], intentArray[i]);
+        }
     }
 }
