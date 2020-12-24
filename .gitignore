@@ -5,6 +5,12 @@
 *.ids
 *.iws
 
+# VSCode Files
+.settings/
+bin/
+.classpath
+.project
+
 # Build Files
 build/
 /build/
